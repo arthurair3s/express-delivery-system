@@ -3,6 +3,7 @@ type Produto {
   nome: String!
   descricao: String
   preco: Float!
+  categoria: Categoria
 }
 
 extend type Query {
@@ -15,6 +16,7 @@ extend type Mutation {
     nome: String!
     descricao: String
     preco: Float!
+    categoria_id: ID!
   ): Produto
 
   editarProduto(
@@ -22,6 +24,7 @@ extend type Mutation {
     nome: String!
     descricao: String
     preco: Float!
+    categoria_id: ID
   ): Produto
 
   deletarProduto(id: ID!): Boolean

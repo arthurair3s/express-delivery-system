@@ -1,4 +1,5 @@
 import * as produtoService from '../services/produtoService.js'
+import * as categoriaService from '../services/categoriaService.js'
 
 export const produtoResolver = {
   Query: {
@@ -15,5 +16,12 @@ export const produtoResolver = {
     },
 
     deletarProduto: async (_, { id }) => !!(await produtoService.deletar(id))
+  },
+
+  Produto: {
+    categoria: async parent => {
+      if (!parent.categoria_id) return null
+      return categoriaService.buscarPorId(parent.categoria_id)
+    }
   }
 }

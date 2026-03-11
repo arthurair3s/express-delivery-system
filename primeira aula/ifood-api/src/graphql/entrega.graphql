@@ -1,0 +1,39 @@
+type Entrega {
+  id: ID!
+  pedido: Pedido!
+  entregador: Entregador!
+  status: String
+  previsao_entrega: String
+}
+
+extend type Pedido {
+  entregas: [Entrega]
+}
+
+extend type Entregador {
+  entregas: [Entrega]
+}
+
+extend type Query {
+  entregas: [Entrega]
+  entrega(id: ID!): Entrega
+}
+
+extend type Mutation {
+  criarEntrega(
+    pedido_id: ID!
+    entregador_id: ID!
+    status: String
+    previsao_entrega: String
+  ): Entrega
+
+  editarEntrega(
+    id: ID!
+    pedido_id: ID
+    entregador_id: ID
+    status: String
+    previsao_entrega: String
+  ): Entrega
+
+  deletarEntrega(id: ID!): Boolean
+}
