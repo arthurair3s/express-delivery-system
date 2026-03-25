@@ -1,2 +1,0 @@
-obj\Debug\net10.0/Entregadores.cs \
-obj\Debug\net10.0/EntregadoresGrpc.cs: ../protos/entregadores.proto
