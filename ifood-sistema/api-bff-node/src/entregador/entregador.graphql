@@ -1,0 +1,29 @@
+type Entregador {
+  id: ID!
+  nome: String
+  telefone: String
+  veiculo: String
+}
+
+extend type Query {
+  entregadores: [Entregador]
+  entregador(id: ID!): Entregador
+  buscarEntregadoresProximos(
+    latitude: Float!
+    longitude: Float!
+    raioKm: Float!
+  ): [Entregador]
+}
+
+extend type Mutation {
+  criarEntregador(nome: String, telefone: String, veiculo: String): Entregador
+
+  editarEntregador(
+    id: ID!
+    nome: String
+    telefone: String
+    veiculo: String
+  ): Entregador
+
+  deletarEntregador(id: ID!): Boolean
+}

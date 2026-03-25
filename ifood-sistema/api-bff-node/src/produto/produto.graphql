@@ -1,0 +1,31 @@
+type Produto {
+  id: ID!
+  nome: String!
+  descricao: String
+  preco: Float!
+  categoria: Categoria
+}
+
+extend type Query {
+  produtos: [Produto]
+  produto(id: ID!): Produto
+}
+
+extend type Mutation {
+  criarProduto(
+    nome: String!
+    descricao: String
+    preco: Float!
+    categoria_id: ID
+  ): Produto
+
+  editarProduto(
+    id: ID!
+    nome: String!
+    descricao: String
+    preco: Float!
+    categoria_id: ID
+  ): Produto
+
+  deletarProduto(id: ID!): Boolean
+}

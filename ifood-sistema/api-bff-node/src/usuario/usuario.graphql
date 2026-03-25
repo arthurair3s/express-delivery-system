@@ -1,0 +1,30 @@
+type Usuario {
+  id: ID!
+  nome: String!
+  email: String!
+  telefone: String
+}
+
+extend type Query {
+  usuarios: [Usuario]
+  usuario(id: ID!): Usuario
+}
+
+extend type Mutation {
+  criarUsuario(
+    nome: String!
+    email: String!
+    telefone: String
+    senha: String!
+  ): Usuario
+
+  editarUsuario(
+    id: ID!
+    nome: String
+    email: String
+    telefone: String
+    senha: String
+  ): Usuario
+
+  deletarUsuario(id: ID!): Boolean
+}

@@ -1,0 +1,30 @@
+type Pagamento {
+  id: ID!
+  pedido: Pedido!
+  metodo: String
+  status: String
+  valor: Float
+}
+
+extend type Pedido {
+  pagamentos: [Pagamento]
+}
+
+extend type Query {
+  pagamentos: [Pagamento]
+  pagamento(id: ID!): Pagamento
+}
+
+extend type Mutation {
+  criarPagamento(pedido_id: ID!, metodo: String, status: String, valor: Float): Pagamento
+
+  editarPagamento(
+    id: ID!
+    pedido_id: ID
+    metodo: String
+    status: String
+    valor: Float
+  ): Pagamento
+
+  deletarPagamento(id: ID!): Boolean
+}

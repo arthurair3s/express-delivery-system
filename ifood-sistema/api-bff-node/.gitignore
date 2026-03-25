@@ -1,0 +1,12 @@
+# dependencias
+node_modules/
+
+# variaveis de ambiente sensiveis
+.env
+
+# binarios gerados automaticamente pelo prisma
+src/generated/
+
+# sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,28 @@
+type Restaurante {
+  id: ID!
+  nome: String!
+  descricao: String
+  endereco: String
+}
+
+extend type Query {
+  restaurantes: [Restaurante]
+  restaurante(id: ID!): Restaurante
+}
+
+extend type Mutation {
+  criarRestaurante(
+    nome: String!
+    descricao: String
+    endereco: String
+  ): Restaurante
+
+  editarRestaurante(
+    id: ID!
+    nome: String
+    descricao: String
+    endereco: String
+  ): Restaurante
+
+  deletarRestaurante(id: ID!): Boolean
+}

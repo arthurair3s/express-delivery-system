@@ -1,0 +1,35 @@
+type Pedido {
+  id: ID!
+  usuario: Usuario
+  status: String
+  valor_total: Float
+  data_criacao: String
+}
+
+extend type Usuario {
+  pedidos: [Pedido]
+}
+
+extend type Query {
+  pedidos: [Pedido]
+  pedido(id: ID!): Pedido
+}
+
+extend type Mutation {
+  criarPedido(
+    usuario_id: ID!
+    status: String
+    valor_total: Float
+    data_criacao: String
+  ): Pedido
+
+  editarPedido(
+    id: ID!
+    usuario_id: ID
+    status: String
+    valor_total: Float
+    data_criacao: String
+  ): Pedido
+
+  deletarPedido(id: ID!): Boolean
+}

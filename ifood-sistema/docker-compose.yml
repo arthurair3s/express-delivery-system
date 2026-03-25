@@ -1,0 +1,63 @@
+services:
+  # Banco de Dados Relacional
+  db:
+    image: postgres:15-alpine
+    container_name: ifood_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ifood_clone
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Banco de Dados em Memória (Geolocalização)
+  redis:
+    image: redis:7-alpine
+    container_name: ifood_redis
+    ports:
+      - '6379:6379'
+    restart: unless-stopped
+
+  # Microserviço C# (gRPC)
+  ms-entregadores:
+    build:
+      context: .
+      dockerfile: ms-entregadores-cs/Dockerfile
+    container_name: ms_entregadores
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=db;Database=ifood_clone;Username=postgres;Password=postgres
+      - ConnectionStrings__RedisConnection=redis:6379
+    depends_on:
+      - db
+      - redis
+    ports:
+      - '5000:5000'
+
+  # API BFF Node.js (GraphQL)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ifood_api
+    ports:
+      - '4000:4000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ifood_clone?schema=public
+      - ENTREGADORES_SERVICE_URL=ms_entregadores:5000
+    depends_on:
+      - db
+      - ms-entregadores
+    volumes:
+      - ./api-bff-node:/app
+      - ./protos:/app/protos
+      - /app/node_modules
+
+    command: sh -c "npm install && npx prisma generate && npm run dev"
+
+volumes:
+  postgres_data:

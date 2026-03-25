@@ -1,0 +1,39 @@
+type ItemPedido {
+  id: ID!
+  pedido: Pedido
+  produto: Produto
+  quantidade: Int
+  preco_unitario: Float
+}
+
+extend type Pedido {
+  itensPedido: [ItemPedido]
+}
+
+extend type Produto {
+  itensPedido: [ItemPedido]
+}
+
+extend type Query {
+  itensPedido: [ItemPedido]
+  itemPedido(id: ID!): ItemPedido
+}
+
+extend type Mutation {
+  criarItemPedido(
+    pedido_id: ID!
+    produto_id: ID!
+    quantidade: Int!
+    preco_unitario: Float!
+  ): ItemPedido
+
+  editarItemPedido(
+    id: ID!
+    pedido_id: ID
+    produto_id: ID
+    quantidade: Int
+    preco_unitario: Float
+  ): ItemPedido
+
+  deletarItemPedido(id: ID!): Boolean
+}

@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option csharp_namespace = "ms_entregadores_cs.Grpc";
+
+service EntregadorService {
+  // Chamado pelo GraphQL (Node) para persistir no Postgres via C#
+  rpc CadastrarEntregador (NovoEntregadorRequest) returns (EntregadorResponse);
+
+  // Streaming para o app do entregador enviar coordenadas (direto para o Redis)
+  rpc AtualizarLocalizacaoStream (stream LocalizacaoRequest) returns (LocalizacaoSummary);
+
+  // O GraphQL chama este para buscar quem está perto (Consulta o Redis)
+  rpc BuscarProximos (BuscaProximaRequest) returns (ListaEntregadoresResponse);
+}
+
+message NovoEntregadorRequest {
+  string nome = 1;
+  string telefone = 2;
+  string veiculo = 3;
+}
+
+message LocalizacaoRequest {
+  int32 entregador_id = 1; // Baseado no seu Int do Prisma
+  double latitude = 2;
+  double longitude = 3;
+}
+
+message LocalizacaoSummary {
+  bool sucesso = 1;
+  string mensagem = 2;
+}
+
+message BuscaProximaRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double raio_km = 3;
+}
+
+message EntregadorResponse {
+  int32 id = 1;
+  string nome = 2;
+  string telefone = 3;
+  string veiculo = 4;
+  double latitude = 5;
+  double longitude = 6;
+}
+
+message ListaEntregadoresResponse {
+  repeated EntregadorResponse entregadores = 1;
+}
