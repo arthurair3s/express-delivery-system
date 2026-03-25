@@ -1,40 +1,59 @@
-# Dependências (nunca commitar, geradas pelo npm/yarn/pnpm)
+# === .NET Specific (Obrigatório) ===
+bin/
+obj/
+TestResults/
+_ReSharper*/
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+# === Dependências (Gerenciadores de Pacotes) ===
+# NuGet packages (exceto se você usa o estilo antigo de packages.config com pasta local)
+packages/
+# Node.js (caso tenha front-end)
 node_modules/
 jspm_packages/
 
-# Logs e arquivos de debug
+# === Logs e Arquivos de Debug ===
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# Arquivos de ambiente e segredos (CRÍTICO)
+# === Arquivos de Ambiente e Segredos (CRÍTICO) ===
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
 *.secret
 *.key
+*.pfx
+*.publishsettings
 
-# Builds de produção e arquivos gerados
+# === Builds de Produção e Arquivos Gerados ===
 dist/
 build/
 output/
 out/
+publish/
 coverage/
 *.tmp
+*.temp
 
-# IDEs e Editores
+# === IDEs e Editores ===
 .vscode/
 .idea/
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+# Removido *.sln daqui, pois a Solution deve ser commitada!
 
-# Sistema Operacional
+# === Sistema Operacional ===
 .DS_Store
 Thumbs.db
+desktop.ini
