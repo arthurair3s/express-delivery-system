@@ -1,19 +1,24 @@
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build e Cache
+dist/
+.npm/
+.prisma/
+
+# Variáveis de ambiente
+.env
+.env.test
+.env.local
+
+# Docker e Git
 .git
-.github
-.vscode
-.dockerignore
-docker-compose.yml
+.gitignore
 Dockerfile
-*.md
+docker-compose.yml
+.dockerignore
 
-**/api-bff-node/node_modules
-**/api-bff-node/npm-debug.log
-**/api-bff-node/dist
-**/api-bff-node/.env
-**/api-bff-node/.env.test
-**/api-bff-node/prisma/migrations
-
+# Arquivos de Sistema
 .DS_Store
 Thumbs.db
-desktop.ini
-*.log

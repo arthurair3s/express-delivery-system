@@ -1,18 +1,27 @@
-.git
-.github
-.vscode
+api-bff-node/
+
+bin/
+obj/
+out/
+**/*.user
+appsettings.Development.json
+
+# --- IDE e Cache ---
+.vs/
+.vscode/
+ms-projects-cs.slnx
+*.suo
+*.sln.docstates
+
+# --- Global e Docker ---
+.git/
+.github/
 .dockerignore
 docker-compose.yml
 Dockerfile
 *.md
 
-**/ms-entregadores-cs/bin/
-**/ms-entregadores-cs/obj/
-**/ms-entregadores-cs/out/
-**/ms-entregadores-cs/appsettings.Development.json
-**/ms-entregadores-cs/*.user
-
+# --- Sistema ---
 .DS_Store
 Thumbs.db
 desktop.ini
-*.log

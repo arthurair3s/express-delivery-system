@@ -1,8 +1,0 @@
-# --- Global ---
-.git
-.github
-.vscode
-.dockerignore
-docker-compose.yml
-Dockerfile
-*.md
