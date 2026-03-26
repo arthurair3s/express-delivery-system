@@ -16,5 +16,8 @@ export const Query = {
     )
 
     return result || []
-  }
+  },
+
+  entregadoresProximosAoRestaurante: async (_, { restauranteId, raioKm }) =>
+    entregadorService.listarProximosAoRestaurante(restauranteId, raioKm)
 }
