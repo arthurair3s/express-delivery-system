@@ -1,8 +1,6 @@
 using Data;
 using Features.GerenciamentoEntregadores;
 using Microsoft.EntityFrameworkCore;
-using ms_entregadores_cs.Data;
-using ms_entregadores_cs.Features.GerenciamentoEntregadores;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);

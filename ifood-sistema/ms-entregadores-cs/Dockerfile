@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY ["ms-entregadores-cs/ms-entregadores-cs.csproj", "ms-entregadores-cs/"]
@@ -8,13 +8,9 @@ RUN dotnet restore "ms-entregadores-cs/ms-entregadores-cs.csproj"
 
 COPY . .
 WORKDIR "/src/ms-entregadores-cs"
-RUN dotnet publish "ms-entregadores-cs.csproj" -c Release -o /app/publish
+RUN dotnet build "ms-entregadores-cs.csproj" -c Release -o /app/build
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
-COPY --from=build /app/publish .
-
-ENV ASPNETCORE_URLS=http://+:5000
-EXPOSE 5000
-
+COPY --from=build /app/build .
 ENTRYPOINT ["dotnet", "ms-entregadores-cs.dll"]

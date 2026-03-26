@@ -1,5 +1,4 @@
 services:
-  # Banco de Dados Relacional
   db:
     image: postgres:15-alpine
     container_name: ifood_postgres
@@ -13,7 +12,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  # Banco de Dados em Memória (Geolocalização)
   redis:
     image: redis:7-alpine
     container_name: ifood_redis
@@ -21,7 +19,6 @@ services:
       - '6379:6379'
     restart: unless-stopped
 
-  # Microserviço C# (gRPC)
   ms-entregadores:
     build:
       context: .
@@ -38,10 +35,9 @@ services:
     ports:
       - '5000:5000'
 
-  # API BFF Node.js (GraphQL)
   api:
     build:
-      context: .
+      context: ./api-bff-node
       dockerfile: Dockerfile
     container_name: ifood_api
     ports:
@@ -56,7 +52,6 @@ services:
       - ./api-bff-node:/app
       - ./protos:/app/protos
       - /app/node_modules
-
     command: sh -c "npm install && npx prisma generate && npm run dev"
 
 volumes:

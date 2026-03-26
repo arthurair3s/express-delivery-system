@@ -1,8 +1,8 @@
 import client from './grpcClient.js'
 
-export const criar = args => {
+export const criar = dados => {
   return new Promise((resolve, reject) => {
-    client.CadastrarEntregador(args, (error, response) => {
+    client.CadastrarEntregador(dados, (error, response) => {
       if (error) return reject(error)
       resolve(response)
     })
@@ -12,10 +12,10 @@ export const criar = args => {
 export const listarProximos = (latitude, longitude, raioKm) => {
   return new Promise((resolve, reject) => {
     client.BuscarProximos(
-      { latitude, longitude, raioKm },
+      { latitude, longitude, raio_km: raioKm },
       (error, response) => {
         if (error) return reject(error)
-        resolve(response.entregadores)
+        resolve(response.entregadores || [])
       }
     )
   })
