@@ -57,3 +57,17 @@ coverage/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# === Dados Pesados (OSRM) ===
+osrm-data/*
+!osrm-data/.gitkeep
+
+# === Protos Gerados (Opcional, mas recomendado) ===
+# O gRPC gera esses arquivos no build, não precisam ir pro Git
+**/obj/
+**/bin/
+
+# === Database e Prisma ===
+# Ignorar arquivos de banco de dados locais se existirem
+*.db
+*.db-journal

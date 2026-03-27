@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   db:
     image: postgres:15-alpine
@@ -10,7 +12,14 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+    networks:
+      - app-network
 
   redis:
     image: redis:7-alpine
@@ -18,6 +27,8 @@ services:
     ports:
       - '6379:6379'
     restart: unless-stopped
+    networks:
+      - app-network
 
   ms-entregadores:
     build:
@@ -25,15 +36,50 @@ services:
       dockerfile: ms-entregadores-cs/Dockerfile
     container_name: ms_entregadores
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5000
-      - ConnectionStrings__DefaultConnection=Host=db;Database=ifood_clone;Username=postgres;Password=postgres
-      - ConnectionStrings__RedisConnection=redis:6379
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: Host=db;Database=ifood_clone;Username=postgres;Password=postgres
+      ConnectionStrings__RedisConnection: redis:6379
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - '5000:5000'
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  ms-roteamento:
+    build:
+      context: .
+      dockerfile: ms-roteamento-cs/Dockerfile
+    container_name: ms_roteamento
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5002
+      OSRM_URL: http://osrm-server:5000
+    depends_on:
+      osrm-server:
+        condition: service_started
+    ports:
+      - '5001:5002'
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  osrm-server:
+    image: osrm/osrm-backend
+    container_name: osrm_server
+    ports:
+      - '5080:5000'
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld /data/sudeste-260326.osrm
+    restart: unless-stopped
+    networks:
+      - app-network
 
   api:
     build:
@@ -42,18 +88,25 @@ services:
     container_name: api_delivery
     ports:
       - '4000:4000'
-      - '5555:5555'
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ifood_clone?schema=public
-      - ENTREGADORES_SERVICE_URL=ms_entregadores:5000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/ifood_clone?schema=public
+      ENTREGADORES_SERVICE_URL: http://ms_entregadores:5000
     depends_on:
-      - db
-      - ms-entregadores
+      db:
+        condition: service_healthy
+      ms-entregadores:
+        condition: service_started
     volumes:
       - ./api-bff-node:/app
-      - ./protos:/app/protos
       - /app/node_modules
+      - ./protos:/app/protos
     command: sh -c "npx prisma migrate deploy && npm run dev"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
 
 volumes:
   postgres_data:
