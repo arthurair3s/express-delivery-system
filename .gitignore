@@ -71,3 +71,4 @@ osrm-data/*
 # Ignorar arquivos de banco de dados locais se existirem
 *.db
 *.db-journal
+/generated/

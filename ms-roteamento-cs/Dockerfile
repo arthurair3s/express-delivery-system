@@ -4,7 +4,6 @@ WORKDIR /src
 COPY ["ms-roteamento-cs/ms-roteamento-cs.csproj", "ms-roteamento-cs/"]
 COPY ["protos/", "protos/"]
 
-# Restaura as dependências
 RUN dotnet restore "ms-roteamento-cs/ms-roteamento-cs.csproj"
 
 COPY . .

@@ -37,7 +37,7 @@ services:
     container_name: ms_entregadores
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:5000
+      ASPNETCORE_URLS: http://+:5001
       ConnectionStrings__DefaultConnection: Host=db;Database=ifood_clone;Username=postgres;Password=postgres
       ConnectionStrings__RedisConnection: redis:6379
     depends_on:
@@ -46,7 +46,7 @@ services:
       redis:
         condition: service_started
     ports:
-      - '5000:5000'
+      - '5001:5001'
     restart: unless-stopped
     networks:
       - app-network
@@ -64,7 +64,7 @@ services:
       osrm-server:
         condition: service_started
     ports:
-      - '5001:5002'
+      - '5002:5002'
     restart: unless-stopped
     networks:
       - app-network
@@ -77,12 +77,6 @@ services:
     volumes:
       - ./osrm-data:/data
     command: osrm-routed --algorithm mld /data/sudeste-260326.osrm
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
     restart: unless-stopped
     networks:
       - app-network
