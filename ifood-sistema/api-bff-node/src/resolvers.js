@@ -8,6 +8,7 @@ import { entregadorResolver } from './entregador/Resolver/entregadorResolver.js'
 import { entregaResolver } from './entrega/Resolver/entregaResolver.js'
 import { pagamentoResolver } from './pagamento/Resolver/pagamentoResolver.js'
 import { avaliacaoResolver } from './avaliacao/Resolver/avaliacaoResolver.js'
+import { roteamentoResolver } from './roteamento/Resolver/roteamentoResolver.js'
 
 export const resolvers = [
   usuarioResolver,
@@ -19,5 +20,6 @@ export const resolvers = [
   entregadorResolver,
   entregaResolver,
   pagamentoResolver,
-  avaliacaoResolver
+  avaliacaoResolver,
+  roteamentoResolver
 ]

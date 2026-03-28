@@ -77,6 +77,12 @@ services:
     volumes:
       - ./osrm-data:/data
     command: osrm-routed --algorithm mld /data/sudeste-260326.osrm
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     restart: unless-stopped
     networks:
       - app-network
@@ -90,11 +96,14 @@ services:
       - '4000:4000'
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/ifood_clone?schema=public
-      ENTREGADORES_SERVICE_URL: http://ms_entregadores:5000
+      ENTREGADORES_SERVICE_URL: ms_entregadores:5000
+      ROTEAMENTO_SERVICE_URL: ms_roteamento:5002
     depends_on:
       db:
         condition: service_healthy
       ms-entregadores:
+        condition: service_started
+      ms-roteamento:
         condition: service_started
     volumes:
       - ./api-bff-node:/app

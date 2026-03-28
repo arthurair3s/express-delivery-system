@@ -5,11 +5,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddGrpc();
 
-builder.Services.AddHttpClient<IRoteamentoService, RoteamentoLogic>(client =>
+builder.Services.AddHttpClient(nameof(RoteamentoLogic), client =>
 {
     var osrmUrl = builder.Configuration["OSRM_URL"] ?? "http://osrm-server:5000/";
     client.BaseAddress = new Uri(osrmUrl);
 });
+
+builder.Services.AddScoped<IRoteamentoService, RoteamentoLogic>();
 
 var app = builder.Build();
 

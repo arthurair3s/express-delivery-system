@@ -6,7 +6,13 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const PROTO_PATH = path.resolve(__dirname, '..', '..', 'protos', 'entregadores.proto')
+const PROTO_PATH = path.resolve(
+  __dirname,
+  '..',
+  '..',
+  'protos',
+  'entregadores.proto'
+)
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
@@ -19,7 +25,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 const entregadorProto = grpc.loadPackageDefinition(packageDefinition)
 
 const client = new entregadorProto.EntregadorService(
-  process.env.ENTREGADORES_SERVICE_URL || 'ms_entregadores:5000',
+  process.env.ENTREGADORES_SERVICE_URL,
   grpc.credentials.createInsecure()
 )
 

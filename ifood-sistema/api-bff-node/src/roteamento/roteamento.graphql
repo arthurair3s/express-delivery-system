@@ -1,0 +1,46 @@
+# Ponto geográfico (latitude e longitude)
+type PontoRota {
+  latitude: Float
+  longitude: Float
+}
+
+# Resposta resumida: só números, sem o trajeto desenhado
+type ResumoRota {
+  distancia_km: Float
+  duracao_estimada_segundos: Int
+  mensagem_erro: String
+}
+
+# Resposta completa: lista de pontos para desenhar o trajeto no mapa
+type GeometriaRota {
+  caminho: [PontoRota]
+  distancia_total_km: Float
+  duracao_total_segundos: Int
+}
+
+# Input para múltiplos pontos
+input LocalizacaoInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+extend type Query {
+  # Retorna distância (km) e tempo estimado entre dois pontos
+  calcularResumoRota(
+    origemLat: Float!
+    origemLon: Float!
+    destinoLat: Float!
+    destinoLon: Float!
+  ): ResumoRota
+
+  # Retorna o trajeto completo (lista de pontos do caminho) entre dois pontos
+  obterGeometriaRota(
+    origemLat: Float!
+    origemLon: Float!
+    destinoLat: Float!
+    destinoLon: Float!
+  ): GeometriaRota
+
+  # Rota com múltiplas paradas (ex: entregador → restaurante → cliente)
+  calcularRotaMultiplosPontos(pontos: [LocalizacaoInput!]!): GeometriaRota
+}

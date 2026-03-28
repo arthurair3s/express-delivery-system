@@ -7,7 +7,7 @@ namespace Features.ProcessamentoRotas
 {
   public class RoteamentoLogic(IHttpClientFactory httpClientFactory, ILogger<RoteamentoLogic> logger) : IRoteamentoService
   {
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(nameof(RoteamentoLogic));
     private readonly ILogger<RoteamentoLogic> _logger = logger;
 
     public async Task<ResumoRotaResponse> CalcularResumo(RotaRequest request)

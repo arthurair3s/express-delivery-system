@@ -1,9 +1,9 @@
 import * as restauranteService from '../restaurante/restauranteService.js'
-import client from './grpcClient.js'
+import entregadorClient from '../grpc/entregadorClient.js'
 
 export const criar = dados => {
   return new Promise((resolve, reject) => {
-    client.CadastrarEntregador(dados, (error, response) => {
+    entregadorClient.CadastrarEntregador(dados, (error, response) => {
       if (error) return reject(error)
       resolve(response)
     })
@@ -12,7 +12,7 @@ export const criar = dados => {
 
 export const listarProximos = (latitude, longitude, raioKm) => {
   return new Promise((resolve, reject) => {
-    client.BuscarProximos(
+    entregadorClient.BuscarProximos(
       { latitude, longitude, raio_km: raioKm },
       (error, response) => {
         if (error) return reject(error)
@@ -32,7 +32,7 @@ export const listarProximosAoRestaurante = async (restauranteId, raioKm) => {
   }
 
   return new Promise((resolve, reject) => {
-    client.BuscarProximos(
+    entregadorClient.BuscarProximos(
       {
         latitude: restaurante.latitude,
         longitude: restaurante.longitude,
@@ -48,16 +48,19 @@ export const listarProximosAoRestaurante = async (restauranteId, raioKm) => {
 
 export const buscarPorId = id => {
   return new Promise((resolve, reject) => {
-    client.ObterEntregadorPorId({ id: parseInt(id) }, (error, response) => {
-      if (error) return reject(error)
-      resolve(response)
-    })
+    entregadorClient.ObterEntregadorPorId(
+      { id: parseInt(id) },
+      (error, response) => {
+        if (error) return reject(error)
+        resolve(response)
+      }
+    )
   })
 }
 
 export const editarPorId = (id, dados) => {
   return new Promise((resolve, reject) => {
-    client.EditarEntregador(
+    entregadorClient.EditarEntregador(
       { id: parseInt(id), ...dados },
       (error, response) => {
         if (error) return reject(error)
@@ -69,16 +72,19 @@ export const editarPorId = (id, dados) => {
 
 export const deletar = id => {
   return new Promise((resolve, reject) => {
-    client.DeletarEntregador({ id: parseInt(id) }, (error, response) => {
-      if (error) return reject(error)
-      resolve(response.sucesso)
-    })
+    entregadorClient.DeletarEntregador(
+      { id: parseInt(id) },
+      (error, response) => {
+        if (error) return reject(error)
+        resolve(response.sucesso)
+      }
+    )
   })
 }
 
 export const listar = () => {
   return new Promise((resolve, reject) => {
-    client.ListarTodosEntregadores({}, (error, response) => {
+    entregadorClient.ListarTodosEntregadores({}, (error, response) => {
       if (error) return reject(error)
       resolve(response.entregadores || [])
     })
