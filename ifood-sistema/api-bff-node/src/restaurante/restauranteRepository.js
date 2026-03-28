@@ -18,13 +18,15 @@ export const criarRestaurante = async restaurante => {
 }
 
 export const editarRestaurantePorId = async (id, restaurante) => {
-  const { nome, descricao, endereco } = restaurante
+  const { nome, descricao, endereco, latitude, longitude } = restaurante
   return await prisma.restaurantes.update({
     where: { id: Number(id) },
     data: {
       nome: nome || undefined,
       descricao: descricao || undefined,
-      endereco: endereco || undefined
+      endereco: endereco || undefined,
+      latitude: latitude ?? undefined,
+      longitude: longitude ?? undefined
     }
   })
 }

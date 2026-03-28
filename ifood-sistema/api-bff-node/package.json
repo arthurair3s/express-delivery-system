@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node ./src/index.js"
+    "dev": "node ./src/index.js",
+    "seed": "node ./prisma/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,9 @@
     "express": "^5.2.1",
     "graphql": "^16.13.1",
     "pg": "^8.20.0"
+  },
+  "prisma": {
+    "seed": "node ./prisma/seed.js"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

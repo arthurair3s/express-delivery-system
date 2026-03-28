@@ -5,9 +5,6 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                      ?? builder.Configuration["ConnectionStrings:DefaultConnection"];
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -25,6 +22,18 @@ builder.Services.AddScoped<EntregadorRepository>();
 builder.Services.AddGrpc();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+  var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
+
+  var canConnect = await db.Database.CanConnectAsync();
+  if (canConnect)
+    logger.LogInformation("Conexão com o banco de dados estabelecida com sucesso.");
+  else
+    logger.LogCritical("Não foi possível conectar ao banco de dados. Verifique a connection string.");
+}
 
 app.MapGrpcService<EntregadorService>();
 

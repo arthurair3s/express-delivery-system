@@ -1,4 +1,4 @@
-﻿using Data;
+using Data;
 using Features.GerenciamentoEntregadores.Contracts;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
@@ -6,10 +6,11 @@ using IRedisDatabase = StackExchange.Redis.IDatabase;
 
 namespace Features.GerenciamentoEntregadores
 {
-  public class EntregadorRepository(IConnectionMultiplexer redis, AppDbContext dbContext) : IEntregadorRepository
+  public class EntregadorRepository(IConnectionMultiplexer redis, AppDbContext dbContext, ILogger<EntregadorRepository> logger) : IEntregadorRepository
   {
     private readonly IRedisDatabase _redis = redis.GetDatabase();
     private readonly AppDbContext _dbContext = dbContext;
+    private readonly ILogger<EntregadorRepository> _logger = logger;
     private const string RedisKey = "entregadores_posicoes";
 
     public async Task AtualizaPosicaoRedis(int entregadorId, double latitude, double longitude)
@@ -38,14 +39,14 @@ namespace Features.GerenciamentoEntregadores
 
     public async Task<List<Entregador>> ObterDadosEntregadoresPorIds(List<int> ids)
     {
-      Console.WriteLine($"DEBUG C#: Buscando no Postgres os IDs: {string.Join(", ", ids)}");
+      _logger.LogInformation("Buscando no Postgres os IDs: {Ids}", string.Join(", ", ids));
 
       var lista = await _dbContext.Entregadores
           .Where(e => ids.Contains(e.Id))
           .AsNoTracking()
           .ToListAsync();
 
-      Console.WriteLine($"DEBUG C#: Registros encontrados no banco: {lista.Count}");
+      _logger.LogInformation("Registros encontrados no banco: {Count}", lista.Count);
 
       return lista;
     }
@@ -76,10 +77,10 @@ namespace Features.GerenciamentoEntregadores
       if (entregador == null) return false;
 
       _dbContext.Entregadores.Remove(entregador);
+      await _dbContext.SaveChangesAsync();
 
       await _redis.GeoRemoveAsync(RedisKey, id.ToString());
 
-      await _dbContext.SaveChangesAsync();
       return true;
     }
   }

@@ -1,8 +1,12 @@
 import grpc from '@grpc/grpc-js'
 import protoLoader from '@grpc/proto-loader'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
-const PROTO_PATH = path.resolve(process.cwd(), 'protos/entregadores.proto')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const PROTO_PATH = path.resolve(__dirname, '..', '..', 'protos', 'entregadores.proto')
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,

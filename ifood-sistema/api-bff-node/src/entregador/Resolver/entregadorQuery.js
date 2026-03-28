@@ -3,7 +3,7 @@ import * as entregadorService from '../entregadorService.js'
 export const Query = {
   entregadores: async () => {
     const response = await entregadorService.listar()
-    return response.entregadores || []
+    return response || []
   },
 
   entregador: async (_, { id }) => entregadorService.buscarPorId(id),
