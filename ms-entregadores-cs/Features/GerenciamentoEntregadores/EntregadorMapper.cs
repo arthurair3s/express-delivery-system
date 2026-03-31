@@ -1,4 +1,4 @@
-﻿using ms_entregadores_cs.Grpc;
+using ms_entregadores_cs.Grpc;
 
 namespace Features.GerenciamentoEntregadores;
 
@@ -10,7 +10,8 @@ public static class EntregadorMapper
     {
       Nome = request.Nome,
       Telefone = request.Telefone,
-      Veiculo = request.Veiculo
+      Veiculo = request.Veiculo,
+      Status = "DISPONIVEL"
     };
   }
 
@@ -23,7 +24,8 @@ public static class EntregadorMapper
       Telefone = entity.Telefone ?? string.Empty,
       Veiculo = entity.Veiculo ?? string.Empty,
       Latitude = lat,
-      Longitude = lon
+      Longitude = lon,
+      Status = Enum.TryParse<StatusEntregador>(entity.Status, true, out var statusEnum) ? statusEnum : StatusEntregador.Offline
     };
   }
 

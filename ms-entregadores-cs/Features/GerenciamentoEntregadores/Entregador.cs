@@ -1,4 +1,4 @@
-﻿namespace Features.GerenciamentoEntregadores;
+namespace Features.GerenciamentoEntregadores;
 
 public partial class Entregador
 {
@@ -9,4 +9,6 @@ public partial class Entregador
     public string? Telefone { get; set; }
 
     public string? Veiculo { get; set; }
+
+    public string? Status { get; set; }
 }

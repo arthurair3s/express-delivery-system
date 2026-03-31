@@ -90,3 +90,23 @@ export const listar = () => {
     })
   })
 }
+
+const STATUS_MAP = {
+  OFFLINE: 0,
+  DISPONIVEL: 1,
+  EM_ENTREGA: 2
+};
+
+export const atualizarStatus = (id, novoStatus) => {
+  const statusEnum = STATUS_MAP[novoStatus];
+
+  return new Promise((resolve, reject) => {
+    entregadorClient.AtualizarStatus(
+      { id: parseInt(id), novo_status: statusEnum },
+      (error, response) => {
+        if (error) return reject(error);
+        resolve(response);
+      }
+    );
+  });
+};

@@ -1,4 +1,4 @@
-﻿using Grpc.Core;
+using Grpc.Core;
 using ms_entregadores_cs.Grpc;
 
 namespace Features.GerenciamentoEntregadores
@@ -29,17 +29,39 @@ namespace Features.GerenciamentoEntregadores
 
     public override async Task<ListaEntregadoresResponse> BuscarProximos(BuscaProximaRequest request, ServerCallContext context)
     {
-      var idsRedis = await _repository.BuscarIdsEntregadoresProximos(request.Latitude, request.Longitude, request.RaioKm);
+        var idsRedis = await _repository.BuscarIdsEntregadoresProximos(request.Latitude, request.Longitude, request.RaioKm);
 
-      if (idsRedis == null || !idsRedis.Any()) return new ListaEntregadoresResponse();
+        if (idsRedis == null || !idsRedis.Any()) return new ListaEntregadoresResponse();
 
-      var idsInt = idsRedis.Select(id => int.TryParse(id, out var val) ? val : 0).Where(id => id > 0).ToList();
-      var entregadoresNoBanco = await _repository.ObterDadosEntregadoresPorIds(idsInt);
+        var idsInt = idsRedis.Keys.ToList();
+        
+        var entregadoresNoBanco = await _repository.ObterDadosEntregadoresPorIds(idsInt);
+        
+        var disponiveis = entregadoresNoBanco.Where(e => e.Status == "DISPONIVEL").ToList();
 
-      var response = new ListaEntregadoresResponse();
-      response.Entregadores.AddRange(entregadoresNoBanco.Select(e => e.ToResponse()));
-      return response;
+        var response = new ListaEntregadoresResponse();
+        response.Entregadores.AddRange(disponiveis.Select(e => 
+        {
+            var pos = idsRedis[e.Id];
+            return e.ToResponse(pos.Latitude, pos.Longitude);
+        }));
+        return response;
     }
+
+    public override async Task<EntregadorResponse> AtualizarStatus(AtualizarStatusRequest request, ServerCallContext context)
+    {
+      var entregador = await _repository.ObterPorId(request.Id);
+
+      if (entregador == null)
+          throw new RpcException(new Status(StatusCode.NotFound, $"Entregador {request.Id} não encontrado."));
+
+      entregador.Status = request.NovoStatus.ToString().ToUpper();
+      
+      await _repository.Atualizar(entregador);
+
+      return entregador.ToResponse();
+    }
+
 
     public override async Task<ListaEntregadoresResponse> ListarTodosEntregadores(Vazio request, ServerCallContext context)
     {

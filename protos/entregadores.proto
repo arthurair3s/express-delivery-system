@@ -7,12 +7,12 @@ option csharp_namespace = "ms_entregadores_cs.Grpc";
  * Gerencia a persistência no PostgreSQL e dados voláteis de localização no Redis.
  */
 service EntregadorService {
-  
+
   /**
    * Cria um novo registro de entregador.
    * Utilizado pela API node para persistência inicial no banco de dados.
    */
-  rpc CadastrarEntregador (NovoEntregadorRequest) returns (EntregadorResponse); 
+  rpc CadastrarEntregador (NovoEntregadorRequest) returns (EntregadorResponse);
 
   /**
    * Recebe um fluxo contínuo de coordenadas do entregador.
@@ -21,7 +21,7 @@ service EntregadorService {
   rpc AtualizarLocalizacaoStream (stream LocalizacaoRequest) returns (LocalizacaoSummary);
 
   /**
-   * Consulta o Redis para encontrar entregadores ativos dentro de um raio específico.
+   * Consulta o Redis para encontrar entregadores com status DISPONIVEL num raio de KM.
    * Retorna uma lista de entregadores com base na última latitude/longitude conhecida.
    */
   rpc BuscarProximos (BuscaProximaRequest) returns (ListaEntregadoresResponse);
@@ -45,6 +45,21 @@ service EntregadorService {
    * Remove permanentemente um entregador do sistema com base no ID fornecido.
    */
   rpc DeletarEntregador (IdRequest) returns (SucessoResponse);
+
+  /**
+   * Altera o estado do entregador (OFFLINE, DISPONIVEL, EM_ENTREGA).
+   * Implementação deve remover do Redis se o status for OFFLINE.
+   */
+  rpc AtualizarStatus (AtualizarStatusRequest) returns (EntregadorResponse);
+}
+
+/**
+ * Define o estado operacional do entregador no ecossistema.
+ */
+enum StatusEntregador {
+  OFFLINE    = 0; // Não aparece em buscas, localização pode ser ignorada.
+  DISPONIVEL = 1; // Ativo e aguardando chamadas de restaurantes.
+  EM_ENTREGA = 2; // Ativo, mas ocupado com um pedido atual.
 }
 
 // --- Mensagens de Requisição e Resposta ---
@@ -69,39 +84,47 @@ message SucessoResponse {
 }
 
 /**
+ * Requisição para mudança de estado do entregador.
+ */
+message AtualizarStatusRequest {
+  int32            id          = 1;
+  StatusEntregador novo_status = 2;
+}
+
+/**
  * Parâmetros para atualização de dados cadastrais.
  * Todos os campos devem ser preenchidos para evitar perda de dados (Overwrite).
  */
 message EditarEntregadorRequest {
-  int32 id = 1;
-  string nome = 2;
+  int32  id       = 1;
+  string nome     = 2;
   string telefone = 3;
-  string veiculo = 4;
+  string veiculo  = 4;
 }
 
 /**
  * Dados necessários para a criação de um novo registro de entregador.
  */
 message NovoEntregadorRequest {
-  string nome = 1;
+  string nome     = 1;
   string telefone = 2;
-  string veiculo = 3;
+  string veiculo  = 3;
 }
 
 /**
  * Representa um ponto geográfico enviado pelo dispositivo do entregador.
  */
 message LocalizacaoRequest {
-  int32 entregador_id = 1;
-  double latitude = 2;
-  double longitude = 3;
+  int32  entregador_id = 1;
+  double latitude      = 2;
+  double longitude     = 3;
 }
 
 /**
  * Resumo do processamento do Stream de localização.
  */
 message LocalizacaoSummary {
-  bool sucesso = 1;
+  bool   sucesso  = 1;
   string mensagem = 2;
 }
 
@@ -109,21 +132,22 @@ message LocalizacaoSummary {
  * Parâmetros para busca geoespacial.
  */
 message BuscaProximaRequest {
-  double latitude = 1;
+  double latitude  = 1;
   double longitude = 2;
-  double raio_km = 3;
+  double raio_km   = 3;
 }
 
 /**
- * Objeto de transferência de dados (DTO) completo do entregador.
+ * Objeto de transferência de dados (DTO) completo do entregador, incluindo o status atual.
  */
 message EntregadorResponse {
-  int32 id = 1;
-  string nome = 2;
-  string telefone = 3;
-  string veiculo = 4;
-  double latitude = 5;
-  double longitude = 6;
+  int32            id        = 1;
+  string           nome      = 2;
+  string           telefone  = 3;
+  string           veiculo   = 4;
+  double           latitude  = 5;
+  double           longitude = 6;
+  StatusEntregador status    = 7;
 }
 
 /**

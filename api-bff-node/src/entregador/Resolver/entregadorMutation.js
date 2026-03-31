@@ -8,5 +8,9 @@ export const Mutation = {
     return entregadorService.editarPorId(id, dados)
   },
 
-  deletarEntregador: async (_, { id }) => !!(await entregadorService.deletar(id))
+  deletarEntregador: async (_, { id }) => !!(await entregadorService.deletar(id)),
+
+  atualizarStatusEntregador: async (_, {id, novoStatus}) => {
+    return await entregadorService.atualizarStatus(id, novoStatus)
+  }
 }

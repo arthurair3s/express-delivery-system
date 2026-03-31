@@ -15,10 +15,18 @@ namespace Features.GerenciamentoEntregadores
 
     public async Task AtualizaPosicaoRedis(int entregadorId, double latitude, double longitude)
     {
-      await _redis.GeoAddAsync(RedisKey, longitude, latitude, entregadorId.ToString());
+      var entregador = await _dbContext.Entregadores
+                .AsNoTracking()
+                .Select(e => new { e.Id, e.Status })
+                .FirstOrDefaultAsync(e => e.Id == entregadorId);
+
+            if (entregador != null && entregador.Status == "DISPONIVEL")
+            {
+                await _redis.GeoAddAsync(RedisKey, longitude, latitude, entregadorId.ToString());
+            }
     }
 
-    public async Task<List<string>> BuscarIdsEntregadoresProximos(double latitude, double longitude, double raioKm)
+    public async Task<Dictionary<int, (double Latitude, double Longitude)>> BuscarIdsEntregadoresProximos(double latitude, double longitude, double raioKm)
     {
       var result = await _redis.GeoSearchAsync(
           RedisKey,
@@ -27,7 +35,27 @@ namespace Features.GerenciamentoEntregadores
           new GeoSearchCircle(raioKm, GeoUnit.Kilometers)
       );
 
-      return result.Select(r => r.Member.ToString()).ToList();
+      var dict = new Dictionary<int, (double, double)>();
+      if (result.Length == 0) return dict;
+
+      var members = result.Select(r => r.Member).ToArray();
+      var positions = await _redis.GeoPositionAsync(RedisKey, members);
+
+      for (int i = 0; i < members.Length; i++)
+      {
+          if (int.TryParse(members[i].ToString(), out var id) && positions[i].HasValue)
+          {
+              dict[id] = (positions[i].Value.Latitude, positions[i].Value.Longitude);
+          }
+      }
+
+      return dict;
+    }
+
+    public async Task RemoverPosicaoRedis(int entregadorId)
+    {
+        _logger.LogInformation("Removendo entregador {Id} do Redis (Ficou OFFLINE)", entregadorId);
+        await _redis.GeoRemoveAsync(RedisKey, entregadorId.ToString());
     }
 
     public async Task<Entregador> CadastrarEntregador(Entregador novoEntregador)
@@ -42,7 +70,7 @@ namespace Features.GerenciamentoEntregadores
       _logger.LogInformation("Buscando no Postgres os IDs: {Ids}", string.Join(", ", ids));
 
       var lista = await _dbContext.Entregadores
-          .Where(e => ids.Contains(e.Id))
+          .Where(e => ids.Contains(e.Id) && e.Status == "DISPONIVEL")
           .AsNoTracking()
           .ToListAsync();
 
@@ -68,6 +96,11 @@ namespace Features.GerenciamentoEntregadores
     {
       _dbContext.Entregadores.Update(entregador);
       await _dbContext.SaveChangesAsync();
+
+      if (entregador.Status != "DISPONIVEL")
+          {
+              await _redis.GeoRemoveAsync(RedisKey, entregador.Id.ToString());
+          }
     }
 
     public async Task<bool> Deletar(int id)

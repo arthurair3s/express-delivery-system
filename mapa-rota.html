@@ -131,20 +131,22 @@ query {
       const regex = /latitude:\s*(-?\d+\.\d+),\s*longitude:\s*(-?\d+\.\d+)/g;
       let match;
       let i = 0;
-      const coresDestaque = ['#22c55e', '#f59e0b', '#ef4444']; // Verde, Laranja, Vermelho
+      
+      // Cores vibrantes ajustadas para o tema escuro
+      const coresDestaque = ['#22c55e', '#f59e0b', '#ef4444']; 
 
       while ((match = regex.exec(queryValue)) !== null) {
         const lat = parseFloat(match[1]);
         const lng = parseFloat(match[2]);
         
-        // Círculo de destaque (maior e visível)
         L.circleMarker([lat, lng], {
-          radius: 8,
-          weight: 2,
-          color: '#ffffff',
-          fillColor: coresDestaque[i] || '#3b82f6',
-          fillOpacity: 1,
-          pane: 'markerPane' // Garante que fiquem acima das bolinhas pequenas
+          radius: 9,           // Aumentei levemente para dar mais presença
+          weight: 3,           // Borda um pouco mais grossa
+          color: '#ffffff',    // Cor da borda (Branca)
+          fillColor: coresDestaque[i] || '#3b82f6', // Cor do preenchimento
+          fillOpacity: 1,      // Totalmente opaco
+          fill: true,          // Garante que o preenchimento seja aplicado
+          pane: 'markerPane' 
         }).addTo(marcadoresLayer)
           .bindPopup(`<b>Ponto ${i + 1}</b><br>${lat}, ${lng}`);
         

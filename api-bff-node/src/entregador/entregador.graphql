@@ -1,8 +1,15 @@
+enum StatusEntregador {
+  OFFLINE
+  DISPONIVEL
+  EM_ENTREGA
+}
+
 type Entregador {
   id: ID!
   nome: String
   telefone: String
   veiculo: String
+  status: StatusEntregador
 }
 
 extend type Query {
@@ -32,4 +39,6 @@ extend type Mutation {
   ): Entregador
 
   deletarEntregador(id: ID!): Boolean
+
+  atualizarStatusEntregador(id: ID!, novoStatus: StatusEntregador!): Entregador
 }
