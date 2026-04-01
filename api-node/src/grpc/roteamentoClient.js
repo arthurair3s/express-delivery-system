@@ -10,6 +10,7 @@ const PROTO_PATH = path.resolve(
   __dirname,
   '..',
   '..',
+  '..',
   'protos',
   'roteamento.proto'
 )
@@ -25,7 +26,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 const roteamentoProto = grpc.loadPackageDefinition(packageDefinition)
 
 const client = new roteamentoProto.RoteamentoService(
-  process.env.ROTEAMENTO_SERVICE_URL,
+  process.env.ROTEAMENTO_SERVICE_URL || 'localhost:5270',
   grpc.credentials.createInsecure()
 )
 

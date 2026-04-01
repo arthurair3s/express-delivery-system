@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -83,7 +83,7 @@ services:
 
   api:
     build:
-      context: ./api-bff-node
+      context: ./api-node
       dockerfile: Dockerfile
     container_name: api_delivery
     ports:
@@ -100,7 +100,7 @@ services:
       ms-roteamento:
         condition: service_started
     volumes:
-      - ./api-bff-node:/app
+      - ./api-node:/app
       - /app/node_modules
       - ./protos:/app/protos
     command: sh -c "npx prisma migrate deploy && npm run dev"
@@ -110,6 +110,7 @@ services:
 
 networks:
   app-network:
+
 
 volumes:
   postgres_data:

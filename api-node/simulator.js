@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import entregadorClient from './src/grpc/entregadorClient.js';
 import * as entregadorService from './src/entregador/entregadorService.js';
 
@@ -34,7 +35,7 @@ async function garantirFrotaMinima(entregadoresAtuais) {
 }
 
 async function iniciarSimulador() {
-  console.log("🚦 Iniciando Simulador de Frota na Zona Norte do Rio...");
+  console.log("Iniciando Simulador de Frota na Zona Norte do Rio...");
 
   let entregadores = [];
   try {

@@ -10,6 +10,7 @@ const PROTO_PATH = path.resolve(
   __dirname,
   '..',
   '..',
+  '..',
   'protos',
   'entregadores.proto'
 )
@@ -25,7 +26,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 const entregadorProto = grpc.loadPackageDefinition(packageDefinition)
 
 const client = new entregadorProto.EntregadorService(
-  process.env.ENTREGADORES_SERVICE_URL,
+  process.env.ENTREGADORES_SERVICE_URL || 'localhost:5001',
   grpc.credentials.createInsecure()
 )
 
