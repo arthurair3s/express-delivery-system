@@ -21,13 +21,13 @@ public partial class AppDbContext : DbContext
     modelBuilder.Entity<Entregador>(entity =>
     {
       entity.HasKey(e => e.Id).HasName("entregadores_pkey");
-      entity.ToTable("entregadores"); // Garante que bate com o Prisma
+      entity.ToTable("entregadores");
 
-      entity.Property(e => e.Id).HasColumnName("id");
+      entity.Property(e => e.Id).HasColumnName("id").HasColumnType("integer");
       entity.Property(e => e.Nome).HasMaxLength(100).HasColumnName("nome");
       entity.Property(e => e.Telefone).HasMaxLength(20).HasColumnName("telefone");
       entity.Property(e => e.Veiculo).HasMaxLength(50).HasColumnName("veiculo");
-      entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("status");
+      entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("status").HasColumnType("varchar");
     });
 
     OnModelCreatingPartial(modelBuilder);

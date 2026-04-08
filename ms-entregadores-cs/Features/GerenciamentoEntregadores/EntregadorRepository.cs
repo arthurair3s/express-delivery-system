@@ -12,24 +12,35 @@ namespace Features.GerenciamentoEntregadores
     private readonly AppDbContext _dbContext = dbContext;
     private readonly ILogger<EntregadorRepository> _logger = logger;
     private const string RedisKey = "entregadores_posicoes";
+    private const string GeoKey = "entregadores_geo";
 
     public async Task AtualizaPosicaoRedis(int entregadorId, double latitude, double longitude)
     {
-      var entregador = await _dbContext.Entregadores
-                .AsNoTracking()
-                .Select(e => new { e.Id, e.Status })
-                .FirstOrDefaultAsync(e => e.Id == entregadorId);
+        // Grava diretamente no Redis sem re-consultar o banco.
+        // O Node BFF já validou o entregador antes de chamar o gRPC.
+        _logger.LogInformation("[Redis] GeoAdd -> Entregador {Id} em ({Lat}, {Lon})", entregadorId, latitude, longitude);
+        var added = await _redis.GeoAddAsync(GeoKey, longitude, latitude, entregadorId.ToString());
+        _logger.LogInformation("[Redis] GeoAdd resultado: {Added}", added);
+    }
 
-            if (entregador != null && (entregador.Status == "DISPONIVEL" || entregador.Status == "EM_ENTREGA"))
-            {
-                await _redis.GeoAddAsync(RedisKey, longitude, latitude, entregadorId.ToString());
-            }
+    public async Task<(double Latitude, double Longitude)?> ObterPosicaoRedis(int entregadorId)
+    {
+        var positions = await _redis.GeoPositionAsync(GeoKey, new RedisValue[] { entregadorId.ToString() });
+        if (positions != null && positions.Length > 0 && positions[0].HasValue)
+        {
+            var pos = positions[0].Value;
+            _logger.LogInformation("[Redis] GeoPosition encontrada para {Id}: Lon={Lon}, Lat={Lat}", entregadorId, pos.Longitude, pos.Latitude);
+            // GeoPosition retorna (Longitude, Latitude) nessa ordem
+            return (pos.Latitude, pos.Longitude);
+        }
+        _logger.LogWarning("[Redis] GeoPosition para Entregador {Id} não encontrada na chave '{Key}'", entregadorId, GeoKey);
+        return null;
     }
 
     public async Task<Dictionary<int, (double Latitude, double Longitude)>> BuscarIdsEntregadoresProximos(double latitude, double longitude, double raioKm)
     {
       var result = await _redis.GeoSearchAsync(
-          RedisKey,
+          GeoKey,
           longitude,
           latitude,
           new GeoSearchCircle(raioKm, GeoUnit.Kilometers)
@@ -55,7 +66,7 @@ namespace Features.GerenciamentoEntregadores
     public async Task RemoverPosicaoRedis(int entregadorId)
     {
         _logger.LogInformation("Removendo entregador {Id} do Redis (Ficou OFFLINE)", entregadorId);
-        await _redis.GeoRemoveAsync(RedisKey, entregadorId.ToString());
+        await _redis.GeoRemoveAsync(GeoKey, entregadorId.ToString());
     }
 
     public async Task<Entregador> CadastrarEntregador(Entregador novoEntregador)
@@ -67,16 +78,11 @@ namespace Features.GerenciamentoEntregadores
 
     public async Task<List<Entregador>> ObterDadosEntregadoresPorIds(List<int> ids)
     {
-      _logger.LogInformation("Buscando no Postgres os IDs: {Ids}", string.Join(", ", ids));
-
-      var lista = await _dbContext.Entregadores
-          .Where(e => ids.Contains(e.Id) && (e.Status == "DISPONIVEL" || e.Status == "EM_ENTREGA"))
-          .AsNoTracking()
-          .ToListAsync();
-
-      _logger.LogInformation("Registros encontrados no banco: {Count}", lista.Count);
-
-      return lista;
+        var idsArray = ids.ToArray();
+        return await _dbContext.Entregadores
+            .Where(e => idsArray.Contains(e.Id) && (e.Status == "DISPONIVEL" || e.Status == "EM_ENTREGA"))
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     public async Task<Entregador?> ObterPorId(int id)
@@ -97,9 +103,9 @@ namespace Features.GerenciamentoEntregadores
       _dbContext.Entregadores.Update(entregador);
       await _dbContext.SaveChangesAsync();
 
-      if (entregador.Status != "DISPONIVEL")
+      if (entregador.Status?.ToUpper() == "OFFLINE")
           {
-              await _redis.GeoRemoveAsync(RedisKey, entregador.Id.ToString());
+              await _redis.GeoRemoveAsync(GeoKey, entregador.Id.ToString());
           }
     }
 

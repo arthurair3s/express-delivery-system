@@ -2,6 +2,7 @@ type Categoria {
   id: ID!
   nome: String!
   restaurante: Restaurante
+  produtos: [Produto]
 }
 
 extend type Restaurante {

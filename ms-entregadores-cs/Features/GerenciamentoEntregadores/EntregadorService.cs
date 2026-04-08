@@ -55,7 +55,10 @@ namespace Features.GerenciamentoEntregadores
       if (entregador == null)
           throw new RpcException(new Status(StatusCode.NotFound, $"Entregador {request.Id} não encontrado."));
 
-      entregador.Status = request.NovoStatus.ToString().ToUpper();
+      entregador.Status = request.NovoStatus switch {
+          StatusEntregador.EmEntrega => "EM_ENTREGA",
+          _ => request.NovoStatus.ToString().ToUpper()
+      };
       
       await _repository.Atualizar(entregador);
 
@@ -77,6 +80,11 @@ namespace Features.GerenciamentoEntregadores
 
       if (entregador == null)
         throw new RpcException(new Status(StatusCode.NotFound, $"Entregador {request.Id} não encontrado."));
+
+      var pos = await _repository.ObterPosicaoRedis(entregador.Id);
+      if (pos.HasValue) {
+          return entregador.ToResponse(pos.Value.Latitude, pos.Value.Longitude);
+      }
 
       return entregador.ToResponse();
     }

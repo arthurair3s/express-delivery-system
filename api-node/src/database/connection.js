@@ -5,7 +5,7 @@ import prismaPkg from '@prisma/client'
 const { Pool } = pgPkg
 const { PrismaClient } = prismaPkg
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@db_postgres:5432/db_postgres?schema=public"
+const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/ifood_clone?schema=public"
 
 const pool = new Pool({ connectionString })
 const adapter = new PrismaPg(pool)

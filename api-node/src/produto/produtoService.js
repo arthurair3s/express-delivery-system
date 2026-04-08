@@ -8,6 +8,10 @@ export const buscarPorId = async id => {
   return produtoRepository.buscarProdutoPorId(id)
 }
 
+export const buscarPorCategoria = async categoria_id => {
+  return produtoRepository.buscarProdutosPorCategoria(categoria_id)
+}
+
 export const criar = async dados => {
   return produtoRepository.criarProduto(dados)
 }

@@ -3,23 +3,26 @@ import * as restauranteService from '../restauranteService.js'
 
 export const Mutation = {
   criarRestaurante: async (_, args) => {
-    const { nome, descricao, endereco } = args
+    const { nome, descricao, endereco, latitude, longitude } = args
 
-    let coordenadas = { latitude: 0, longitude: 0 }
+    let coordenadas = { latitude: latitude || 0, longitude: longitude || 0 }
 
-    try {
-      const res = await obterCoordenadas(endereco)
-      if (res) coordenadas = res
-    } catch {
-      console.log('Falha ao buscar coordenadas, usando padrão 0,0', error)
+    // Se não passou lat/long manual mas passou endereço, tenta geocoding
+    if (!latitude && !longitude && endereco) {
+      try {
+        const res = await obterCoordenadas(endereco)
+        if (res) coordenadas = res
+      } catch (error) {
+        console.log('Falha ao buscar coordenadas, usando padrão 0,0', error)
+      }
     }
 
     return await restauranteService.criar({
       nome,
       descricao,
       endereco,
-      latitude: coordenadas?.latitude || 0,
-      longitude: coordenadas?.longitude || 0
+      latitude: coordenadas.latitude,
+      longitude: coordenadas.longitude
     })
   },
 

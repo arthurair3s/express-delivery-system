@@ -44,3 +44,9 @@ export const deletarPedido = async id => {
     where: { id: Number(id) }
   })
 }
+
+export const buscarPedidoPorUsuarioId = async (usuarioId) => {
+  return await prisma.pedidos.findMany({
+    where: { usuario_id: Number(usuarioId) }
+  });
+}

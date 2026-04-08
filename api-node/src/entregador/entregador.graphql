@@ -41,4 +41,6 @@ extend type Mutation {
   deletarEntregador(id: ID!): Boolean
 
   atualizarStatusEntregador(id: ID!, novoStatus: StatusEntregador!): Entregador
+
+  atualizarLocalizacaoEntregador(id: ID!, latitude: Float!, longitude: Float!): Boolean
 }

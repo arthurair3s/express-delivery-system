@@ -12,5 +12,9 @@ export const Mutation = {
 
   atualizarStatusEntregador: async (_, {id, novoStatus}) => {
     return await entregadorService.atualizarStatus(id, novoStatus)
+  },
+
+  atualizarLocalizacaoEntregador: async (_, { id, latitude, longitude }) => {
+    return await entregadorService.atualizarLocalizacao(id, latitude, longitude)
   }
 }

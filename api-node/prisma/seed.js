@@ -173,18 +173,17 @@ const AVALIACOES_CONFIG = [
 async function main() {
   console.log('Iniciando seed do banco de dados...\n')
 
-  // Limpa os dados existentes na ordem correta (respeitando FK)
-  console.log('Limpando dados anteriores...')
-  await prisma.avaliacoes.deleteMany()
-  await prisma.itens_pedido.deleteMany()
-  await prisma.pagamentos.deleteMany()
-  await prisma.entregas.deleteMany()
-  await prisma.pedidos.deleteMany()
-  await prisma.produtos.deleteMany()
-  await prisma.categorias.deleteMany()
-  await prisma.restaurantes.deleteMany()
-  await prisma.entregadores.deleteMany()
-  await prisma.usuarios.deleteMany()
+  // Limpa os dados existentes na ordem correta (respeitando FK) e reseta os IDs para 1
+  console.log('Limpando dados anteriores e resetando IDs...')
+  const tables = [
+    'avaliacoes', 'itens_pedido', 'pagamentos', 'entregas', 
+    'pedidos', 'produtos', 'categorias', 'restaurantes', 
+    'entregadores', 'usuarios'
+  ];
+  
+  for (const table of tables) {
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`);
+  }
 
   // Usuários
   console.log('Criando usuários...')
@@ -237,8 +236,12 @@ async function main() {
       prisma.pedidos.create({
         data: {
           usuario_id: u.id,
-          status: ['pendente', 'em_preparo', 'entregue'][i % 3],
-          valor_total: 0 // será atualizado abaixo
+          restaurante_id: restaurantesArray[i % restaurantesArray.length].id,
+          status: 'EM_PREPARO_ENTREGA',
+          valor_total: 0,
+          // Coordenadas reais no RJ (próximas aos restaurantes da seed)
+          destino_latitude: -22.9068,
+          destino_longitude: -43.1729
         }
       })
     )
@@ -298,8 +301,8 @@ async function main() {
         data: {
           pedido_id: p.id,
           entregador_id: entregadores[i % entregadores.length].id,
-          status: ['aguardando_coleta', 'a_caminho', 'entregue'][i % 3],
-          previsao_entrega: new Date(Date.now() + (i + 1) * 30 * 60 * 1000) // +30min por pedido
+          status: 'ATRIBUIDA',
+          previsao_entrega: new Date(Date.now() + (i + 1) * 30 * 60 * 1000)
         }
       })
     )

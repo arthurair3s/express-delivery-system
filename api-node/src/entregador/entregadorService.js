@@ -110,3 +110,17 @@ export const atualizarStatus = (id, novoStatus) => {
     );
   });
 };
+
+export const atualizarLocalizacao = (id, latitude, longitude) => {
+  return new Promise((resolve, reject) => {
+    const stream = entregadorClient.AtualizarLocalizacaoStream((error, response) => {
+      if (error) return reject(error);
+      resolve(response.sucesso);
+    });
+    
+    const entregador_id = parseInt(id);
+    console.log(`[GRPC-STREAM] Enviando -> ID: ${entregador_id}, Lat: ${latitude}, Lon: ${longitude}`);
+    stream.write({ entregador_id, latitude, longitude });
+    stream.end();
+  });
+};

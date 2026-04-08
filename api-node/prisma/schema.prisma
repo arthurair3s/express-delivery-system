@@ -25,18 +25,14 @@ model categorias {
   produtos       produtos[]
 }
 
-enum StatusEntregador {
-  OFFLINE
-  DISPONIVEL
-  EM_ENTREGA
-}
+
 
 model entregadores {
   id        Int              @id @default(autoincrement())
   nome      String?          @db.VarChar(100)
   telefone  String?          @db.VarChar(20)
   veiculo   String?          @db.VarChar(50)
-  status    StatusEntregador @default(DISPONIVEL)
+  status    String?          @default("DISPONIVEL") @db.VarChar(50)
   entregas  entregas[]
 }
 

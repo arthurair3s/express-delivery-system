@@ -10,6 +10,12 @@ export const buscarCategoriaPorId = async id => {
   })
 }
 
+export const buscarCategoriasPorRestaurante = async restaurante_id => {
+  return await prisma.categorias.findMany({
+    where: { restaurante_id: Number(restaurante_id) }
+  })
+}
+
 export const criarCategoria = async categoria => {
   const { nome, restaurante_id } = categoria
   return await prisma.categorias.create({

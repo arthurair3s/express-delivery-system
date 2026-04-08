@@ -90,7 +90,7 @@ services:
       - '4000:4000'
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/ifood_clone?schema=public
-      ENTREGADORES_SERVICE_URL: ms_entregadores:5000
+      ENTREGADORES_SERVICE_URL: ms_entregadores:5001
       ROTEAMENTO_SERVICE_URL: ms_roteamento:5002
     depends_on:
       db:

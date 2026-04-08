@@ -10,6 +10,12 @@ export const buscarProdutoPorId = async id => {
   })
 }
 
+export const buscarProdutosPorCategoria = async categoria_id => {
+  return await prisma.produtos.findMany({
+    where: { categoria_id: Number(categoria_id) }
+  })
+}
+
 export const criarProduto = async produto => {
   const { nome, descricao, preco, categoria_id } = produto
   return await prisma.produtos.create({

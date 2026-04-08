@@ -4,6 +4,8 @@ type Entrega {
   entregador: Entregador!
   status: String
   previsao_entrega: String
+  rota: GeometriaRota
+  resumo_trajeto: ResumoRota
 }
 
 extend type Pedido {

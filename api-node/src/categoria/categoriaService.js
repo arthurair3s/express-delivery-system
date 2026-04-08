@@ -8,6 +8,10 @@ export const buscarPorId = async id => {
   return categoriaRepository.buscarCategoriaPorId(id)
 }
 
+export const buscarPorRestaurante = async restaurante_id => {
+  return categoriaRepository.buscarCategoriasPorRestaurante(restaurante_id)
+}
+
 export const criar = async categoria => {
   return categoriaRepository.criarCategoria(categoria)
 }

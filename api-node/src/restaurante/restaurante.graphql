@@ -17,6 +17,8 @@ extend type Mutation {
     nome: String!
     descricao: String
     endereco: String
+    latitude: Float
+    longitude: Float
   ): Restaurante
 
   editarRestaurante(
