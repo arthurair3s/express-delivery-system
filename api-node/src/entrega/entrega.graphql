@@ -6,6 +6,8 @@ type Entrega {
   previsao_entrega: String
   rota: GeometriaRota
   resumo_trajeto: ResumoRota
+  rota_coleta: GeometriaRota
+  rota_entrega: GeometriaRota
 }
 
 extend type Pedido {
@@ -37,5 +39,8 @@ extend type Mutation {
     previsao_entrega: String
   ): Entrega
 
+
   deletarEntrega(id: ID!): Boolean
+
+  simularDeslocamento(id: ID!): Boolean
 }

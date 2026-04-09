@@ -7,8 +7,7 @@ builder.Services.AddGrpc();
 
 builder.Services.AddHttpClient(nameof(RoteamentoLogic), client =>
 {
-    var osrmUrl = builder.Configuration["OSRM_URL"] ?? "http://osrm-server:5000/";
-    client.BaseAddress = new Uri(osrmUrl);
+    client.BaseAddress = new Uri("http://172.20.0.10:5000/");
 });
 
 builder.Services.AddScoped<IRoteamentoService, RoteamentoLogic>();

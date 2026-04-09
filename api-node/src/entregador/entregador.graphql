@@ -10,6 +10,8 @@ type Entregador {
   telefone: String
   veiculo: String
   status: StatusEntregador
+  latitude: String
+  longitude: String
 }
 
 extend type Query {
@@ -42,5 +44,11 @@ extend type Mutation {
 
   atualizarStatusEntregador(id: ID!, novoStatus: StatusEntregador!): Entregador
 
-  atualizarLocalizacaoEntregador(id: ID!, latitude: Float!, longitude: Float!): Boolean
+  atualizarLocalizacaoEntregador(
+    id: ID!
+    latitude: Float!
+    longitude: Float!
+  ): Boolean
+
+  povoarFrota: Boolean
 }

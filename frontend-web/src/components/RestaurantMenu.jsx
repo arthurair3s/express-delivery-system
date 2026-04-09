@@ -47,8 +47,8 @@ export default function RestaurantMenu({ restaurante, onBack, onOrderCreated }) 
     try {
       const variables = {
         restaurante_id: restaurante.id,
-        destino_latitude: Number(restaurante.latitude || -22.9068) + 0.005,
-        destino_longitude: Number(restaurante.longitude || -43.1729) + 0.005,
+        destino_latitude: -22.9035,
+        destino_longitude: -43.1730,
         valor_total: valorTotal
       };
 

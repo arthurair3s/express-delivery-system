@@ -8,5 +8,9 @@ export const Mutation = {
     return entregaService.editarPorId(id, dados)
   },
 
-  deletarEntrega: async (_, { id }) => !!(await entregaService.deletar(id))
+  deletarEntrega: async (_, { id }) => !!(await entregaService.deletar(id)),
+
+  simularDeslocamento: async (_, { id }) => {
+    return await entregaService.simularDeslocamento(id);
+  }
 }

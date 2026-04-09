@@ -55,10 +55,18 @@ export const ACOMPANHAR_PEDIDO = `
         entregador {
           id
           nome
+          latitude
+          longitude
         }
         resumo_trajeto {
           distancia_km
           duracao_estimada_segundos
+        }
+        rota_coleta {
+          caminho { latitude longitude }
+        }
+        rota_entrega {
+          caminho { latitude longitude }
         }
         rota {
           caminho {
@@ -85,5 +93,17 @@ export const MOVER_ENTREGADOR = `
     editarEntregador(id: $id, latitude: $latitude, longitude: $longitude) {
       id
     }
+  }
+`;
+
+export const POVOAR_FROTA = `
+  mutation PovoarFrota {
+    povoarFrota
+  }
+`;
+
+export const SIMULAR_DESLOCAMENTO = `
+  mutation SimularDeslocamento($id: ID!) {
+    simularDeslocamento(id: $id)
   }
 `;

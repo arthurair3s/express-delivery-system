@@ -25,14 +25,14 @@ model categorias {
   produtos       produtos[]
 }
 
-
-
 model entregadores {
   id        Int              @id @default(autoincrement())
   nome      String?          @db.VarChar(100)
   telefone  String?          @db.VarChar(20)
   veiculo   String?          @db.VarChar(50)
   status    String?          @default("DISPONIVEL") @db.VarChar(50)
+  latitude  String?          @db.VarChar(50)
+  longitude String?          @db.VarChar(50)
   entregas  entregas[]
 }
 

@@ -240,8 +240,8 @@ async function main() {
           status: 'EM_PREPARO_ENTREGA',
           valor_total: 0,
           // Coordenadas reais no RJ (próximas aos restaurantes da seed)
-          destino_latitude: -22.9068,
-          destino_longitude: -43.1729
+          destino_latitude: -22.9035,
+          destino_longitude: -43.1730
         }
       })
     )

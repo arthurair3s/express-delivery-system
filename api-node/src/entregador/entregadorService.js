@@ -1,6 +1,10 @@
 import * as restauranteService from '../restaurante/restauranteService.js'
 import entregadorClient from '../grpc/entregadorClient.js'
 
+let simulacaoInterval = null;
+const BASE_LAT = -22.9035;
+const BASE_LNG = -43.1730;
+
 export const criar = dados => {
   return new Promise((resolve, reject) => {
     entregadorClient.CadastrarEntregador(dados, (error, response) => {
@@ -123,4 +127,51 @@ export const atualizarLocalizacao = (id, latitude, longitude) => {
     stream.write({ entregador_id, latitude, longitude });
     stream.end();
   });
+};
+
+export const povoarFrota = async () => {
+  if (simulacaoInterval) return true;
+
+  // 1. garante frota minima
+  let entregadores = await listar();
+  const frotaDesejada = 15;
+  
+  if (entregadores.length < frotaDesejada) {
+    const faltam = frotaDesejada - entregadores.length;
+    for (let i = 1; i <= faltam; i++) {
+      try {
+        await criar({
+          nome: `Motoqueiro ${i} (Simulado)`,
+          telefone: `219${Math.floor(Math.random() * 90000000 + 10000000)}`,
+          veiculo: 'Moto Honda CG 160'
+        });
+      } catch (e) {
+        console.error('erro ao criar entregador simulado:', e.message);
+      }
+    }
+    entregadores = await listar();
+  }
+
+  // 2. inicia loop de gps aleatorio (3s)
+  simulacaoInterval = setInterval(() => {
+    entregadores.forEach(async e => {
+      // garante status disponivel para ser encontrado pelo BFF
+      try { await atualizarStatus(e.id, 'DISPONIVEL'); } catch(err) {}
+
+      const randomLat = (Math.random() - 0.5) * 0.13;
+      const randomLng = (Math.random() - 0.5) * 0.13;
+      
+      const lat = BASE_LAT + randomLat;
+      const lng = BASE_LNG + randomLng;
+
+      // usa o helper atualizarLocalizacao que ja gerencia o ciclo de vida do stream gRPC
+      try {
+        await atualizarLocalizacao(e.id, lat, lng);
+      } catch (err) {
+        console.error(`[Simulação] Erro ao atualizar GPS do entregador ${e.id}:`, err.message);
+      }
+    });
+  }, 3000);
+
+  return true;
 };

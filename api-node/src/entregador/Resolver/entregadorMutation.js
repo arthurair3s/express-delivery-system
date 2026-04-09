@@ -16,5 +16,9 @@ export const Mutation = {
 
   atualizarLocalizacaoEntregador: async (_, { id, latitude, longitude }) => {
     return await entregadorService.atualizarLocalizacao(id, latitude, longitude)
+  },
+
+  povoarFrota: async () => {
+    return await entregadorService.povoarFrota()
   }
 }

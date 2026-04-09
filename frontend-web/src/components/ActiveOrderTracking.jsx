@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ACOMPANHAR_PEDIDO, ATUALIZAR_STATUS_ENTREGA } from '../graphql/queries';
+import { ACOMPANHAR_PEDIDO, ATUALIZAR_STATUS_ENTREGA, SIMULAR_DESLOCAMENTO } from '../graphql/queries';
+import TrackingMap from './TrackingMap';
 
 export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [simulando, setSimulando] = useState(false);
 
   useEffect(() => {
     // polling a cada 3 segundos
@@ -12,22 +14,22 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
       fetch('http://localhost:4000/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           query: ACOMPANHAR_PEDIDO,
           variables: { id: pedidoId }
         })
       })
-      .then(r => r.json())
-      .then(res => {
-        if (res.errors) throw new Error(res.errors[0].message);
-        setData(res.data.pedido);
-        setLoading(false);
-      })
-      .catch(e => {
-        console.error(e);
-        setError(e);
-        setLoading(false);
-      });
+        .then(r => r.json())
+        .then(res => {
+          if (res.errors) throw new Error(res.errors[0].message);
+          setData(res.data.pedido);
+          setLoading(false);
+        })
+        .catch(e => {
+          console.error(e);
+          setError(e);
+          setLoading(false);
+        });
     };
 
     fetchStatus(); // busca inicial
@@ -40,15 +42,44 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
       await fetch('http://localhost:4000/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           query: ATUALIZAR_STATUS_ENTREGA,
           variables: { id: entregaId, status: novoStatus }
         })
       });
       // o polling busca a mudanca em 3s
-    } catch(e) {
+    } catch (e) {
       console.error(e);
       alert("Erro ao mudar o status!");
+    }
+  };
+
+  const handleIniciarSimulacao = async (entregaId) => {
+    if (!entregaId) {
+      alert("Aguarde a atribuição de um entregador...");
+      return;
+    }
+    
+    setSimulando(true);
+    try {
+      const res = await fetch('http://localhost:4000/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: SIMULAR_DESLOCAMENTO,
+          variables: { id: entregaId }
+        })
+      }).then(r => r.json());
+
+      if (res.errors) throw new Error(res.errors[0].message);
+      if (res.data.simularDeslocamento === false) {
+          throw new Error("O servidor não conseguiu calcular a rota para a simulação.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao iniciar simulação: " + e.message);
+    } finally {
+      setSimulando(false);
     }
   };
 
@@ -115,19 +146,31 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
       <div className="flex flex-col gap-4">
         <div className="glass-card p-6 bg-slate-900 text-white relative overflow-hidden">
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
-          
+
           <h3 className="font-medium text-slate-400 text-sm mb-4">Painel Técnico (Motorista Mock)</h3>
           <p className="text-xl font-bold mb-6">Status da Rota no C#: <span className="text-blue-400">{rota.length > 0 ? `${rota.length} pontos` : 'Calculando...'}</span></p>
 
           <div className="grid grid-cols-1 gap-3">
-            <button 
+            <button
+              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2"
+              onClick={() => handleIniciarSimulacao(entrega?.id)}
+              disabled={simulando || !entrega || entrega?.status?.toUpperCase() === 'ENTREGUE'}
+            >
+              {simulando ? '⌛ processando...' : (
+                !entrega ? 'Aguardando atribuição...' :
+                entrega?.status?.toUpperCase() === 'ATRIBUIDA' ? '🛵 simular: ir para o restaurante' :
+                  entrega?.status?.toUpperCase() === 'EM_TRANSITO' ? '🏠 simular: ir para o cliente' :
+                    'iniciar deslocamento automatico'
+              )}
+            </button>
+            <button
               className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white py-3 rounded-lg font-medium transition"
               onClick={() => handleMudarStatus('EM_TRANSITO', entrega?.id)}
               disabled={entrega?.status !== 'ATRIBUIDA'}
             >
               Simular: Motoboy Retirou do Restaurante
             </button>
-            <button 
+            <button
               className="bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white py-3 rounded-lg font-medium transition"
               onClick={() => handleMudarStatus('ENTREGUE', entrega?.id)}
               disabled={entrega?.status !== 'EM_TRANSITO'}
@@ -135,6 +178,18 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
               Simular: Pedido Entregue!
             </button>
           </div>
+        </div>
+
+        {/* 3. mapa interativo (A-B-C) */}
+        <div className="flex flex-col gap-4 mt-8 md:col-span-2">
+          <TrackingMap 
+            rotaColeta={entrega?.rota_coleta} 
+            rotaEntrega={entrega?.rota_entrega} 
+            motoPos={{ 
+              latitude: moto?.latitude || 0, // se n tiver na query ainda
+              longitude: moto?.longitude || 0 
+            }} 
+          />
         </div>
       </div>
     </div>

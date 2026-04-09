@@ -11,7 +11,6 @@ namespace Features.GerenciamentoEntregadores
     private readonly IRedisDatabase _redis = redis.GetDatabase();
     private readonly AppDbContext _dbContext = dbContext;
     private readonly ILogger<EntregadorRepository> _logger = logger;
-    private const string RedisKey = "entregadores_posicoes";
     private const string GeoKey = "entregadores_geo";
 
     public async Task AtualizaPosicaoRedis(int entregadorId, double latitude, double longitude)
@@ -49,11 +48,14 @@ namespace Features.GerenciamentoEntregadores
       if (result.Length == 0) return dict;
 
       var members = result.Select(r => r.Member).ToArray();
-      var positions = await _redis.GeoPositionAsync(RedisKey, members);
+      var positions = await _redis.GeoPositionAsync(GeoKey, members);
 
       for (int i = 0; i < members.Length; i++)
       {
-          if (int.TryParse(members[i].ToString(), out var id) && positions[i].HasValue)
+          if (int.TryParse(members[i].ToString(), out var id) && 
+              positions[i].HasValue && 
+              positions[i].Value.Latitude != 0 && 
+              positions[i].Value.Longitude != 0)
           {
               dict[id] = (positions[i].Value.Latitude, positions[i].Value.Longitude);
           }
@@ -118,7 +120,7 @@ namespace Features.GerenciamentoEntregadores
       _dbContext.Entregadores.Remove(entregador);
       await _dbContext.SaveChangesAsync();
 
-      await _redis.GeoRemoveAsync(RedisKey, id.ToString());
+      await _redis.GeoRemoveAsync(GeoKey, id.ToString());
 
       return true;
     }

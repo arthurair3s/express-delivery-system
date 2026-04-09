@@ -62,7 +62,9 @@ export const entregaResolver = {
       if (destLat == null || destLon == null) return null;
 
       try {
-        return await roteamentoService.obterGeometria(entregador.latitude, entregador.longitude, destLat, destLon);
+        // usa rota estavel do cache para evitar oscilacao de pontos durante o trajeto
+        const { obterRotaEstavel } = await import('../entregaService.js');
+        return await obterRotaEstavel(parent.id);
       } catch (error) {
         return null;
       }
@@ -98,6 +100,21 @@ export const entregaResolver = {
       } catch (error) {
         return null;
       }
+    },
+    rota_coleta: async (parent) => {
+      const { obterRotaColeta } = await import('../entregaService.js');
+      return obterRotaColeta(parent.id);
+    },
+    rota_entrega: async (parent) => {
+      const { obterRotaEntrega } = await import('../entregaService.js');
+      return obterRotaEntrega(parent.id);
+    }
+  },
+  Pedido: {
+    entregas: async (parent) => {
+      // parent aqui é o Pedido
+      const { buscarPorPedidoId } = await import('../entregaService.js');
+      return buscarPorPedidoId(parent.id);
     }
   }
 }
