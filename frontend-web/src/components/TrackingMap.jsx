@@ -11,26 +11,23 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-// icones personalizados
-const motoristaIcon = L.divIcon({
-  html: '<div style="font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); cursor: pointer;">🛵</div>',
-  className: 'custom-div-icon',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
+// icones personalizados com imagens
+const motoristaIcon = L.icon({
+  iconUrl: '/icons/entregador-icon.png',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
 });
 
-const restauranteIcon = L.divIcon({
-  html: '<div style="font-size: 24px;">🏢</div>',
-  className: 'custom-div-icon',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
+const restauranteIcon = L.icon({
+  iconUrl: '/icons/restaurante-icon.png',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
 });
 
-const clienteIcon = L.divIcon({
-  html: '<div style="font-size: 24px;">🏠</div>',
-  className: 'custom-div-icon',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
+const clienteIcon = L.icon({
+  iconUrl: '/icons/cliente-icon.png',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
 });
 
 // componente para ajustar o zoom automaticamente
@@ -44,19 +41,21 @@ function RecenterMap({ bounds }) {
   return null;
 }
 
-export default function TrackingMap({ rotaColeta, rotaEntrega, motoPos }) {
+export default function TrackingMap({ rotaColeta, rotaEntrega, motoPos, restaurantePos, clientePos }) {
   const coletaCoords = rotaColeta?.caminho?.map(p => [p.latitude, p.longitude]) || [];
   const entregaCoords = rotaEntrega?.caminho?.map(p => [p.latitude, p.longitude]) || [];
+
+  // coordenadas dos pontos fixos (não se movem com a rota dinâmica)
+  const restPos = restaurantePos?.latitude ? [restaurantePos.latitude, restaurantePos.longitude] : null;
+  const destPos = clientePos?.latitude ? [clientePos.latitude, clientePos.longitude] : null;
 
   // calcula os bounds para enquadrar tudo
   const allPoints = [...coletaCoords, ...entregaCoords];
   if (motoPos) allPoints.push([motoPos.latitude, motoPos.longitude]);
+  if (restPos) allPoints.push(restPos);
+  if (destPos) allPoints.push(destPos);
   
   const bounds = allPoints.length > 0 ? L.latLngBounds(allPoints) : null;
-
-  // coordenadas dos pontos de interesse
-  const restPos = entregaCoords[0] || coletaCoords[coletaCoords.length - 1];
-  const destPos = entregaCoords[entregaCoords.length - 1];
 
   return (
     <div className="h-[400px] w-full rounded-2xl overflow-hidden glass-card border-none shadow-2xl relative">

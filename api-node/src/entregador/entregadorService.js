@@ -5,6 +5,12 @@ let simulacaoInterval = null;
 const BASE_LAT = -22.9035;
 const BASE_LNG = -43.1730;
 
+const motoristasEmSimulacao = new Set();
+
+export const bloquearParaSimulacao = (id) => motoristasEmSimulacao.add(Number(id));
+export const liberarDeSimulacao = (id) => motoristasEmSimulacao.delete(Number(id));
+export const estaEmSimulacao = (id) => motoristasEmSimulacao.has(Number(id));
+
 export const criar = dados => {
   return new Promise((resolve, reject) => {
     entregadorClient.CadastrarEntregador(dados, (error, response) => {
@@ -155,14 +161,14 @@ export const povoarFrota = async () => {
   // 2. inicia loop de gps aleatorio (3s)
   simulacaoInterval = setInterval(() => {
     entregadores.forEach(async e => {
-      const current = await buscarPorId(e.id);
-      
-      if (current.status === 'EM_ENTREGA' || current.status === 2 || current.status === '2') return;
+      // 1. Bloqueio síncrono local (Indispensável para evitar pulos no mapa)
+      if (estaEmSimulacao(e.id)) return;
 
+      // 2. Garante status disponivel para ser encontrado pelo BFF se estiver livre
       try { await atualizarStatus(e.id, 'DISPONIVEL'); } catch(err) {}
 
-      const randomLat = (Math.random() - 0.5) * 0.13;
-      const randomLng = (Math.random() - 0.5) * 0.13;
+      const randomLat = (Math.random() - 0.5) * 0.01;
+      const randomLng = (Math.random() - 0.5) * 0.01;
       
       const lat = BASE_LAT + randomLat;
       const lng = BASE_LNG + randomLng;

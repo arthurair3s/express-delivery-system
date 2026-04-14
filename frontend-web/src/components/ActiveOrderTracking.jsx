@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ACOMPANHAR_PEDIDO, ATUALIZAR_STATUS_ENTREGA, SIMULAR_DESLOCAMENTO } from '../graphql/queries';
 import TrackingMap from './TrackingMap';
+import { API_URL } from '../config';
 
 export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel }) {
   const [data, setData] = useState(null);
@@ -11,7 +12,7 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
   useEffect(() => {
     // polling a cada 3 segundos
     const fetchStatus = () => {
-      fetch('http://localhost:4000/', {
+      fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -39,7 +40,7 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
 
   const handleMudarStatus = async (novoStatus, entregaId) => {
     try {
-      await fetch('http://localhost:4000/', {
+      await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,7 +63,7 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
     
     setSimulando(true);
     try {
-      const res = await fetch('http://localhost:4000/', {
+      const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -81,6 +82,14 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
     } finally {
       setSimulando(false);
     }
+  };
+
+  // Helper para formatar segundos em texto legível
+  const formatarTempo = (segundos) => {
+    if (!segundos || segundos <= 0) return 'Chegou!';
+    const min = Math.floor(segundos / 60);
+    const seg = segundos % 60;
+    return `${min} min ${seg}s`;
   };
 
   if (loading && !data) {
@@ -148,7 +157,25 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
 
           <h3 className="font-medium text-slate-400 text-sm mb-4">Painel Técnico (Motorista Mock)</h3>
-          <p className="text-xl font-bold mb-6">Status da Rota no C#: <span className="text-blue-400">{rota.length > 0 ? `${rota.length} pontos` : 'Calculando...'}</span></p>
+          
+          {/* Lógica para escolher qual info de trajeto exibir */}
+          {(() => {
+            const rotaAtiva = 
+              entrega?.status?.toUpperCase() === 'ATRIBUIDA' ? entrega?.rota_coleta :
+              entrega?.status?.toUpperCase() === 'EM_TRANSITO' ? entrega?.rota_entrega :
+              null;
+
+            const dist = rotaAtiva?.distancia_total_km || 0;
+            const tempo = rotaAtiva?.duracao_total_segundos || 0;
+
+            return (
+              <p className="text-xl font-bold mb-6">
+                Próximo Alvo: <span className="text-blue-400">
+                  {dist > 0 ? `${dist.toFixed(2)} km | ${formatarTempo(tempo)}` : 'Calculando...'}
+                </span>
+              </p>
+            );
+          })()}
 
           <div className="grid grid-cols-1 gap-3">
             <button
@@ -186,9 +213,17 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
             rotaColeta={entrega?.rota_coleta} 
             rotaEntrega={entrega?.rota_entrega} 
             motoPos={{ 
-              latitude: moto?.latitude || 0, // se n tiver na query ainda
-              longitude: moto?.longitude || 0 
+              latitude: Number(moto?.latitude) || 0,
+              longitude: Number(moto?.longitude) || 0 
             }} 
+            restaurantePos={{
+              latitude: Number(restaurante?.latitude),
+              longitude: Number(restaurante?.longitude)
+            }}
+            clientePos={{
+              latitude: Number(data?.destino_latitude),
+              longitude: Number(data?.destino_longitude)
+            }}
           />
         </div>
       </div>

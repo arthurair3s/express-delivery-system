@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GET_RESTAURANTES } from '../graphql/queries';
+import { API_URL } from '../config';
 
 const getLogomarca = (nome = '') => {
   if (nome.toLowerCase().includes('pizza')) return '🍕';
@@ -14,7 +15,7 @@ export default function RestaurantList({ onSelectRestaurant }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:4000/', {
+    fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: GET_RESTAURANTES })

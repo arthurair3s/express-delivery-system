@@ -94,10 +94,10 @@ export const atribuirMelhorEntregador = async pedidoId => {
         selecionados.map(async entregador => {
           try {
             const resumo = await roteamentoService.calcularResumo(
-              entregador.latitude,
-              entregador.longitude,
-              restaurante.latitude,
-              restaurante.longitude
+              Number(entregador.latitude),
+              Number(entregador.longitude),
+              Number(restaurante.latitude),
+              Number(restaurante.longitude)
             )
             return { entregador, eta: resumo.duracao_estimada_segundos }
           } catch (error) {
@@ -148,20 +148,23 @@ export const simularDeslocamento = async (entregaId) => {
   const currentStatus = (entrega.status || "").trim().toUpperCase();
   console.log(`[Simulação] Início para entrega ${entregaId}. Status: ${currentStatus}`);
 
-  // FORÇA status ocupado imediatamente no gRPC
+  // Bloqueio Síncrono Imediato: Impede que o loop global toque neste motorista
+  await entregadorService.bloquearParaSimulacao(entrega.entregador_id);
+  
+  // FORÇA status ocupado no gRPC
   await entregadorService.atualizarStatus(entrega.entregador_id, 'EM_ENTREGA');
 
-  let destLat = pedido.destino_latitude;
-  let destLon = pedido.destino_longitude;
+  let destLat = Number(pedido.destino_latitude);
+  let destLon = Number(pedido.destino_longitude);
 
   if (currentStatus === 'ATRIBUIDA') {
     const restaurante = await restauranteRepository.buscarRestaurantePorId(pedido.restaurante_id);
     if (restaurante) {
-      destLat = restaurante.latitude;
-      destLon = restaurante.longitude;
+      destLat = Number(restaurante.latitude);
+      destLon = Number(restaurante.longitude);
       console.log(`[Simulação] Destino: Restaurante (${restaurante.nome})`);
     } else {
-      console.warn(`[Simulação] ERRO: Restaurante ${pedido.restaurante_id} não encontrado.`);
+      console.warn(`[Simulação] Restaurante ${pedido.restaurante_id} não encontrado.`);
     }
   } else {
     console.log(`[Simulação] Destino: Cliente`);
@@ -184,10 +187,12 @@ export const simularDeslocamento = async (entregaId) => {
       if (currentStatus === 'ATRIBUIDA') {
         console.log(`[Simulação] Sucesso: Chegou ao Restaurante. Atualizando para EM_TRANSITO.`);
         await editarPorId(entregaId, { status: 'EM_TRANSITO' });
+        // Mantém bloqueado pois ainda está em entrega (indo para o cliente)
       } else {
         console.log(`[Simulação] Sucesso: Chegou ao Cliente. Finalizando entrega.`);
         await editarPorId(entregaId, { status: 'ENTREGUE' });
         await entregadorService.atualizarStatus(motorista.id, 'DISPONIVEL');
+        entregadorService.liberarDeSimulacao(motorista.id); // Libera para o loop global
       }
       return;
     }
@@ -241,7 +246,12 @@ export const obterRotaEstavel = async (entregaId) => {
   if (destLat == null || destLon == null) return null;
 
   try {
-    const rota = await roteamentoService.obterGeometria(motorista.latitude, motorista.longitude, destLat, destLon);
+    const rota = await roteamentoService.obterGeometria(
+      Number(motorista.latitude), 
+      Number(motorista.longitude), 
+      Number(destLat), 
+      Number(destLon)
+    );
     if (rota && rota.caminho && rota.caminho.length > 0) {
       routeCache.set(cacheKey, rota);
     }
@@ -256,6 +266,10 @@ export const obterRotaColeta = async (entregaId) => {
   const entrega = await buscarPorId(entregaId);
   if (!entrega) return null;
 
+  // Só mostra a rota de coleta se o motorista ainda estiver indo buscar (ATRIBUIDA)
+  const currentStatus = (entrega.status || "").trim().toUpperCase();
+  if (currentStatus !== 'ATRIBUIDA') return null;
+
   const pedido = await pedidoRepository.buscarPedidoPorId(entrega.pedido_id);
   const motorista = await entregadorService.buscarPorId(entrega.entregador_id);
   if (!pedido || !motorista) return null;
@@ -264,7 +278,12 @@ export const obterRotaColeta = async (entregaId) => {
   if (!restaurante) return null;
 
   try {
-    return await roteamentoService.obterGeometria(motorista.latitude, motorista.longitude, restaurante.latitude, restaurante.longitude);
+    return await roteamentoService.obterGeometria(
+      Number(motorista.latitude), 
+      Number(motorista.longitude), 
+      Number(restaurante.latitude), 
+      Number(restaurante.longitude)
+    );
   } catch (err) {
     return null;
   }
@@ -275,13 +294,31 @@ export const obterRotaEntrega = async (entregaId) => {
   if (!entrega) return null;
 
   const pedido = await pedidoRepository.buscarPedidoPorId(entrega.pedido_id);
-  if (!pedido) return null;
+  const motorista = await entregadorService.buscarPorId(entrega.entregador_id);
+  if (!pedido || !motorista) return null;
 
   const restaurante = await restauranteRepository.buscarRestaurantePorId(pedido.restaurante_id);
   if (!restaurante) return null;
 
+  const currentStatus = (entrega.status || "").trim().toUpperCase();
+
+  // Se o motorista já estiver a caminho do cliente (EM_TRANSITO), 
+  // a rota deve partir da posição atual do motorista, não mais do restaurante.
+  let startLat = restaurante.latitude;
+  let startLon = restaurante.longitude;
+
+  if (currentStatus === 'EM_TRANSITO') {
+    startLat = motorista.latitude;
+    startLon = motorista.longitude;
+  }
+
   try {
-    return await roteamentoService.obterGeometria(restaurante.latitude, restaurante.longitude, pedido.destino_latitude, pedido.destino_longitude);
+    return await roteamentoService.obterGeometria(
+      Number(startLat), 
+      Number(startLon), 
+      Number(pedido.destino_latitude), 
+      Number(pedido.destino_longitude)
+    );
   } catch (err) {
     return null;
   }

@@ -49,6 +49,8 @@ export const ACOMPANHAR_PEDIDO = `
     pedido(id: $id) {
       id
       status
+      destino_latitude
+      destino_longitude
       entregas {
         id
         status
@@ -64,9 +66,13 @@ export const ACOMPANHAR_PEDIDO = `
         }
         rota_coleta {
           caminho { latitude longitude }
+          distancia_total_km
+          duracao_total_segundos
         }
         rota_entrega {
           caminho { latitude longitude }
+          distancia_total_km
+          duracao_total_segundos
         }
         rota {
           caminho {

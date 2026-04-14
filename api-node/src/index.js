@@ -38,10 +38,7 @@ const server = new ApolloServer({
 const { url } = await startStandaloneServer(server, {
   listen: { port: 4000 },
   cors: {
-    origin: [
-      'https://sandbox.embed.apollographql.com',
-      'http://localhost:4000'
-    ],
+    origin: '*',
     credentials: true
   }
 })

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GET_RESTAURANTE_MENU, CRIAR_PEDIDO } from '../graphql/queries';
+import { API_URL } from '../config';
 
 export default function RestaurantMenu({ restaurante, userLocation, onBack, onOrderCreated }) {
   const [data, setData] = useState(null);
@@ -11,7 +12,7 @@ export default function RestaurantMenu({ restaurante, userLocation, onBack, onOr
   const [carrinho, setCarrinho] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:4000/', {
+    fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -52,7 +53,7 @@ export default function RestaurantMenu({ restaurante, userLocation, onBack, onOr
         valor_total: valorTotal
       };
 
-      const res = await fetch('http://localhost:4000/', {
+      const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: CRIAR_PEDIDO, variables })
