@@ -107,6 +107,21 @@ services:
     networks:
       - app-network
 
+  frontend:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+    container_name: frontend_web
+    ports:
+      - '5173:5173'
+    depends_on:
+      - api
+    volumes:
+      - ./frontend-web:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge

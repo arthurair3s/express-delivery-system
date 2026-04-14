@@ -44,12 +44,12 @@ export const atribuirMelhorEntregador = async pedidoId => {
     throw new Error('Restaurante sem coordenadas geográficas cadastradas.')
   }
 
-  // 1. busca entregadores proximos (15km) via grpc - Raio aumentado para facilitar simulação
-  let candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 15.0)
+  // 1. busca entregadores proximos (2.5km) via grpc - Raio reduzido conforme solicitado
+  let candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 2.5)
   
   if (!candidatos || candidatos.length === 0) {
-    console.log(`[Módulo Inteligente] Ninguém a 15km. Tentando busca elástica de 50km...`);
-    candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 50.0);
+    console.log(`[Módulo Inteligente] Ninguém a 2,5km. Tentando busca elástica de 7,5km...`);
+    candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 7.5);
   }
 
   let melhor = null
@@ -148,7 +148,9 @@ export const simularDeslocamento = async (entregaId) => {
   const currentStatus = (entrega.status || "").trim().toUpperCase();
   console.log(`[Simulação] Início para entrega ${entregaId}. Status: ${currentStatus}`);
 
-  // 1. define o destino (restaurante ou cliente)
+  // FORÇA status ocupado imediatamente no gRPC
+  await entregadorService.atualizarStatus(entrega.entregador_id, 'EM_ENTREGA');
+
   let destLat = pedido.destino_latitude;
   let destLon = pedido.destino_longitude;
 
@@ -165,7 +167,6 @@ export const simularDeslocamento = async (entregaId) => {
     console.log(`[Simulação] Destino: Cliente`);
   }
 
-  // 2. pega a rota (usa a estavel/cache para garantir sincronismo com o mapa)
   const rota = await obterRotaEstavel(entregaId);
   if (!rota || !rota.caminho || rota.caminho.length === 0) {
     console.error(`[Simulação] Falha crítica: Rota não encontrada para a entrega ${entregaId}`);
@@ -175,13 +176,11 @@ export const simularDeslocamento = async (entregaId) => {
   const pontos = [...rota.caminho];
   console.log(`[Simulação] Rota carregada: ${pontos.length} pontos disponíveis.`);
 
-  // 3. inicia movimento passo a passo
   const interval = setInterval(async () => {
     if (pontos.length === 0) {
       clearInterval(interval);
       activeSimulations.delete(entregaId);
       
-      // se chegou no restaurante, muda para em transito. se chegou no cliente, finaliza.
       if (currentStatus === 'ATRIBUIDA') {
         console.log(`[Simulação] Sucesso: Chegou ao Restaurante. Atualizando para EM_TRANSITO.`);
         await editarPorId(entregaId, { status: 'EM_TRANSITO' });
@@ -195,7 +194,6 @@ export const simularDeslocamento = async (entregaId) => {
 
     const ponto = pontos.shift();
     try {
-      // log pontual de movimento
       if (pontos.length % 5 === 0) { // loga a cada 5 pontos para nao poluir demais
         console.log(`[Simulação] Motoboy ${motorista.nome} em: ${ponto.latitude.toFixed(5)}, ${ponto.longitude.toFixed(5)} (${pontos.length} restantes)`);
       }
@@ -216,17 +214,14 @@ export const obterRotaEstavel = async (entregaId) => {
   const currentStatus = (entrega.status || "").trim().toUpperCase();
   const cacheKey = `${entregaId}_${currentStatus}`;
 
-  // 1. retorna cache se existir e o status n mudou
   if (routeCache.has(cacheKey)) {
     return routeCache.get(cacheKey);
   }
 
-  // 2. se o status mudou, limpa caches antigos desse id
   for (const key of routeCache.keys()) {
     if (key.startsWith(`${entregaId}_`)) routeCache.delete(key);
   }
 
-  // 3. calcula nova rota
   const pedido = await pedidoRepository.buscarPedidoPorId(entrega.pedido_id);
   const motorista = await entregadorService.buscarPorId(entrega.entregador_id);
   

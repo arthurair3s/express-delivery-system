@@ -56,7 +56,8 @@ export const possuiEntregaAtivaNoRestaurante = async (entregadorId, restauranteI
 
 export const buscarEntregaPorPedidoId = async pedidoId => {
   return await prisma.entregas.findMany({
-    where: { pedido_id: Number(pedidoId) }
+    where: { pedido_id: Number(pedidoId) },
+    orderBy: { id: 'asc' }
   })
 }
 

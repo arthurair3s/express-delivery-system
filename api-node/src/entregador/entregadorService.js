@@ -155,7 +155,10 @@ export const povoarFrota = async () => {
   // 2. inicia loop de gps aleatorio (3s)
   simulacaoInterval = setInterval(() => {
     entregadores.forEach(async e => {
-      // garante status disponivel para ser encontrado pelo BFF
+      const current = await buscarPorId(e.id);
+      
+      if (current.status === 'EM_ENTREGA' || current.status === 2 || current.status === '2') return;
+
       try { await atualizarStatus(e.id, 'DISPONIVEL'); } catch(err) {}
 
       const randomLat = (Math.random() - 0.5) * 0.13;
@@ -164,7 +167,6 @@ export const povoarFrota = async () => {
       const lat = BASE_LAT + randomLat;
       const lng = BASE_LNG + randomLng;
 
-      // usa o helper atualizarLocalizacao que ja gerencia o ciclo de vida do stream gRPC
       try {
         await atualizarLocalizacao(e.id, lat, lng);
       } catch (err) {
