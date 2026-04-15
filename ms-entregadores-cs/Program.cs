@@ -17,7 +17,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
   return ConnectionMultiplexer.Connect(redisConfig);
 });
 
-builder.Services.AddScoped<EntregadorRepository>();
+builder.Services.AddScoped<Features.GerenciamentoEntregadores.Contracts.IEntregadorRepository, EntregadorRepository>();
+builder.Services.AddScoped<Features.GerenciamentoEntregadores.Contracts.ILocalizacaoRedisService, Features.GerenciamentoEntregadores.Services.LocalizacaoRedisService>();
 
 builder.Services.AddGrpc();
 

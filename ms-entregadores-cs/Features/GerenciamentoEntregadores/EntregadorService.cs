@@ -1,11 +1,14 @@
 using Grpc.Core;
 using ms_entregadores_cs.Grpc;
+using Features.GerenciamentoEntregadores.Contracts;
+using Features.GerenciamentoEntregadores.Constants;
 
 namespace Features.GerenciamentoEntregadores
 {
-  public class EntregadorService(EntregadorRepository repository) : ms_entregadores_cs.Grpc.EntregadorService.EntregadorServiceBase
+  public class EntregadorService(IEntregadorRepository repository, ILocalizacaoRedisService redisService) : ms_entregadores_cs.Grpc.EntregadorService.EntregadorServiceBase
   {
-    private readonly EntregadorRepository _repository = repository;
+    private readonly IEntregadorRepository _repository = repository;
+    private readonly ILocalizacaoRedisService _redisService = redisService;
 
     public override async Task<LocalizacaoSummary> AtualizarLocalizacaoStream(
         IAsyncStreamReader<LocalizacaoRequest> requestStream,
@@ -14,7 +17,7 @@ namespace Features.GerenciamentoEntregadores
       int updatesCount = 0;
       await foreach (var request in requestStream.ReadAllAsync(context.CancellationToken))
       {
-        await _repository.AtualizaPosicaoRedis(request.EntregadorId, request.Latitude, request.Longitude);
+        await _redisService.AtualizaPosicaoRedis(request.EntregadorId, request.Latitude, request.Longitude);
         updatesCount++;
       }
       return new LocalizacaoSummary { Sucesso = true, Mensagem = $"Atualizações: {updatesCount}" };
@@ -29,7 +32,7 @@ namespace Features.GerenciamentoEntregadores
 
     public override async Task<ListaEntregadoresResponse> BuscarProximos(BuscaProximaRequest request, ServerCallContext context)
     {
-        var idsRedis = await _repository.BuscarIdsEntregadoresProximos(request.Latitude, request.Longitude, request.RaioKm);
+        var idsRedis = await _redisService.BuscarIdsEntregadoresProximos(request.Latitude, request.Longitude, request.RaioKm);
 
         if (idsRedis == null || !idsRedis.Any()) return new ListaEntregadoresResponse();
 
@@ -37,10 +40,8 @@ namespace Features.GerenciamentoEntregadores
         
         var entregadoresNoBanco = await _repository.ObterDadosEntregadoresPorIds(idsInt);
         
-        var candidatos = entregadoresNoBanco.Where(e => e.Status == "DISPONIVEL" || e.Status == "EM_ENTREGA").ToList();
-
         var response = new ListaEntregadoresResponse();
-        response.Entregadores.AddRange(candidatos.Select(e => 
+        response.Entregadores.AddRange(entregadoresNoBanco.Select(e => 
         {
             var pos = idsRedis[e.Id];
             return e.ToResponse(pos.Latitude, pos.Longitude);
@@ -56,11 +57,17 @@ namespace Features.GerenciamentoEntregadores
           throw new RpcException(new Status(StatusCode.NotFound, $"Entregador {request.Id} não encontrado."));
 
       entregador.Status = request.NovoStatus switch {
-          StatusEntregador.EmEntrega => "EM_ENTREGA",
-          _ => request.NovoStatus.ToString().ToUpper()
+          StatusEntregador.EmEntrega => StatusEntregadorConstants.EmEntrega,
+          StatusEntregador.Disponivel => StatusEntregadorConstants.Disponivel,
+          _ => StatusEntregadorConstants.Offline
       };
       
       await _repository.Atualizar(entregador);
+
+      if (entregador.Status == StatusEntregadorConstants.Offline)
+      {
+          await _redisService.RemoverPosicaoRedis(entregador.Id);
+      }
 
       return entregador.ToResponse();
     }
@@ -81,7 +88,7 @@ namespace Features.GerenciamentoEntregadores
       if (entregador == null)
         throw new RpcException(new Status(StatusCode.NotFound, $"Entregador {request.Id} não encontrado."));
 
-      var pos = await _repository.ObterPosicaoRedis(entregador.Id);
+      var pos = await _redisService.ObterPosicaoRedis(entregador.Id);
       if (pos.HasValue) {
           return entregador.ToResponse(pos.Value.Latitude, pos.Value.Longitude);
       }
@@ -108,6 +115,11 @@ namespace Features.GerenciamentoEntregadores
     public override async Task<SucessoResponse> DeletarEntregador(IdRequest request, ServerCallContext context)
     {
       var deletado = await _repository.Deletar(request.Id);
+
+      if (deletado)
+      {
+          await _redisService.RemoverPosicaoRedis(request.Id);
+      }
 
       return new SucessoResponse { Sucesso = deletado };
     }

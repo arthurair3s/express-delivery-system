@@ -1,4 +1,5 @@
 using ms_entregadores_cs.Grpc;
+using Features.GerenciamentoEntregadores.Constants;
 
 namespace Features.GerenciamentoEntregadores;
 
@@ -11,7 +12,7 @@ public static class EntregadorMapper
       Nome = request.Nome,
       Telefone = request.Telefone,
       Veiculo = request.Veiculo,
-      Status = "DISPONIVEL"
+      Status = StatusEntregadorConstants.Disponivel
     };
   }
 
