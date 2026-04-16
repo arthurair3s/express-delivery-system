@@ -1,6 +1,6 @@
 # 📦 Express Delivery - Real-time Microservices Simulation
 
-Este projeto é uma demonstração de alta performance de uma arquitetura baseada em microserviços, projetada para simular um ecossistema de logística em tempo real. A aplicação utiliza dados geográficos reais, comunicação gRPC ultra-rápida e uma interface reativa para orquestrar pedidos e rastreamento de entregadores.
+Este projeto é um ecossistema de alta performance projetado para demonstrar a aplicação prática de arquiteturas modernas e escaláveis. Desenvolvido com foco em **Microserviços**, **Comunicação gRPC** e **Geoprocessamento**, ele serve como um demonstrador técnico de conceitos robustos de engenharia de software para portfólio de alto nível.
 
 ---
 
@@ -29,7 +29,7 @@ graph TD
 ```
 
 ### Nível 2: Contêineres (Containers)
-Abaixo, a topologia de rede do ecossistema Docker. **Nota:** Todo o tráfego externo é centralizado pelo API Gateway.
+Abaixo, a topologia de rede do ecossistema Docker. **Nota:** Todo o tráfego externo é centralizado pelo API Gateway (Kong), garantindo segurança e padronização.
 
 ```mermaid
 graph TB
@@ -81,7 +81,7 @@ A aplicação é totalmente conteinerizada com **Docker**. Siga os passos abaixo
 *   Pelo menos 8GB de RAM livre (para o servidor de roteamento OSRM).
 
 ### 2. Preparando os Dados de Mapa (OSRM)
-1. **Download**: Baixe o mapa do Brasil ou apenas a região Sudeste em [Geofabrik](https://download.geofabrik.de/south-america/brazil.html) (`sudeste-latest.osm.pbf`).
+1. **Download**: Baixe o mapa da região Sudeste em [Geofabrik](https://download.geofabrik.de/south-america/brazil.html) (`sudeste-latest.osm.pbf`).
 2. **Compilação**: Coloque o arquivo em `./osrm-data/` e execute:
    ```bash
    docker run -t -v "${PWD}/osrm-data:/data" osrm/osrm-backend osrm-extract -p /opt/car.lua /data/seu-arquivo.osm.pbf
@@ -107,7 +107,7 @@ docker compose up --build
 5.  **Painel Técnico**: No menu lateral, simule as ações do motoboy para ver o rastreamento em tempo real via **gRPC** e **OSRM**.
 
 > [!CAUTION]
-> **Persistência de Dados**: O arquivo `compose.yml` está configurado com `--force-reset`. Isso significa que os dados do banco PostgreSQL são resetados e re-populados (Seed) a cada vez que você sobe o container da API.
+> **Persistência de Dados**: O arquivo `compose.yml` está configurado com `--force-reset`. Isso garante que o ambiente de teste sempre inicie em um estado limpo e controlado.
 
 ---
 
@@ -115,12 +115,12 @@ docker compose up --build
 
 | Componente | Tecnologia | Papel |
 | :--- | :--- | :--- |
-| **Frontend** | React, Leaflet | UI e visualização de mapas |
-| **Gateway** | Kong Gateway | Porta de entrada (Porta 8000), JWT e Rate Limit |
-| **API Principal** | Node.js, GraphQL | Orquestração de Microserviços |
-| **Microserviços** | .NET 10 (C#), gRPC | Lógica de negócio e alta performance |
-| **Dados** | PostgreSQL, Redis | Banco estruturado e Cache de localização |
-| **Roteamento** | OSRM Engine | Roteamento baseado em malha viária real |
+| **Frontend** | React, Leaflet | UI moderna e visualização de geoprocessamento |
+| **Gateway** | Kong Gateway | Porta de entrada profissional, JWT e Rate Limit |
+| **API Principal** | Node.js, GraphQL | Orquestração de Microserviços e Schema unificado |
+| **Microserviços** | .NET 10 (C#), gRPC | Performance extrema e lógica de negócio |
+| **Dados** | PostgreSQL, Redis | Persistência relacional e cache de localização ultra-rápido |
+| **Roteamento** | OSRM Engine | Inteligência logística baseada em OpenStreetMap |
 
 ---
 
@@ -130,4 +130,17 @@ docker compose up --build
 *   **OSRM (Direto)**: [http://localhost:5080](http://localhost:5080)
 
 ---
-*Este projeto é parte da disciplina de Arquitetura de Software.*
+
+## 🚧 Status e Visão de Futuro (Roadmap)
+
+Este projeto está em desenvolvimento contínuo, servindo como um **laboratório vivo de arquitetura de software**. O objetivo é consolidar tanto conceitos fundamentais quanto as tendências de mercado mais avançadas.
+
+### Próximas Evoluções Planejadas:
+*   **Mensageria & Resiliência**: Implementação de comunicação assíncrona com **RabbitMQ** e padrões de tolerância a falhas (Circuit Breaker).
+*   **Checkout & Pagamentos**: Integração de um gateway profissional (Stripe) para simulação de fluxos financeiros reais.
+*   **Qualidade & Design**: Refatoração profunda aplicando **Domain-Driven Design (DDD)** e princípios **SOLID**.
+*   **Escalabilidade**: Expansão da malha com novos microserviços especializados.
+*   **Documentação Avançada**: Evolução completa do Modelo C4 até o nível de código.
+
+---
+*Este projeto demonstra o compromisso com a excelência técnica e a paixão por arquiteturas de software complexas.*
