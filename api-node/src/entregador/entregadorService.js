@@ -1,5 +1,6 @@
 import * as restauranteService from '../restaurante/restauranteService.js'
 import entregadorClient from '../grpc/entregadorClient.js'
+import roteamentoClient from '../grpc/roteamentoClient.js'
 
 let simulacaoInterval = null;
 const motoristasBases = new Map();
@@ -196,11 +197,26 @@ export const povoarFrota = async () => {
         const jumpLat = (Math.random() - 0.5) * 0.05;
         const jumpLng = (Math.random() - 0.5) * 0.05;
         
-        const lat = base.lat + jumpLat;
-        const lng = base.lng + jumpLng;
+        const latRaw = base.lat + jumpLat;
+        const lngRaw = base.lng + jumpLng;
+
+        // Snapping via OSRM para evitar que o motoboy nasça/ande na água
+        const snapped = await new Promise((resolve) => {
+          roteamentoClient.EncaixarNaEstrada(
+            { latitude: latRaw, longitude: lngRaw }, 
+            (error, response) => {
+              if (error || !response) {
+                // Se falhar o roteamento, mantém a original (fallback)
+                resolve({ latitude: latRaw, longitude: lngRaw });
+              } else {
+                resolve(response);
+              }
+            }
+          );
+        });
 
         try {
-          await atualizarLocalizacao(e.id, lat, lng);
+          await atualizarLocalizacao(e.id, snapped.latitude, snapped.longitude);
         } catch (err) {
           // ignora falhas pontuais de jitter
         }

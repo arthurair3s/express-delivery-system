@@ -22,5 +22,10 @@ namespace Features.ProcessamentoRotas
     {
       return await _logic.CalcularMultiplosPontos(request);
     }
+
+    public override async Task<Localizacao> EncaixarNaEstrada(Localizacao request, ServerCallContext context)
+    {
+      return await _logic.EncaixarNaEstrada(request);
+    }
   }
 }

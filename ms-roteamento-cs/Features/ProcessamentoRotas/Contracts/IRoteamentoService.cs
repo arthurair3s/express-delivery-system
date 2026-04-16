@@ -7,5 +7,6 @@ namespace Features.ProcessamentoRotas.Contracts
         Task<ResumoRotaResponse> CalcularResumo(RotaRequest request);
         Task<GeometriaRotaResponse> ObterGeometria(RotaRequest request);
         Task<GeometriaRotaResponse> CalcularMultiplosPontos(MultiplosPontosRequest request);
+        Task<Localizacao> EncaixarNaEstrada(Localizacao ponto);
     }
 }

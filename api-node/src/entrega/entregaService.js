@@ -44,11 +44,11 @@ export const atribuirMelhorEntregador = async pedidoId => {
     throw new Error('Restaurante sem coordenadas geográficas cadastradas.')
   }
 
-  let candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 2.5)
+  let candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 2.0)
   
   if (!candidatos || candidatos.length === 0) {
-    console.log(`[Módulo Inteligente] Ninguém a 2,5km. Tentando busca elástica de 5.0km...`);
-    candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 5.0);
+    console.log(`[Módulo Inteligente] Ninguém a 2.0km. Tentando busca elástica de 3.5km...`);
+    candidatos = await entregadorService.listarProximosAoRestaurante(restaurante.id, 3.5);
   }
 
   let melhor = null
@@ -58,7 +58,7 @@ export const atribuirMelhorEntregador = async pedidoId => {
     import('../utils/logger.js').then(({ logger }) => {
       logger.warn(`Radar vazio para o restaurante ${restaurante.nome} (ID: ${restaurante.id}). Falha ao encontrar motoboys.`, 'EntregaService');
     });
-    throw new Error('Nenhum entregador disponível num raio de 5km.');
+    throw new Error('Nenhum entregador disponível num raio de 3.5km.');
   }
 
   const disponiveis = candidatos.filter(e => e.status === 'DISPONIVEL' || e.status === '1' || e.status === 1)

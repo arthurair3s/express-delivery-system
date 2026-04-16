@@ -86,5 +86,36 @@ namespace Features.ProcessamentoRotas.Providers
 
             return res;
         }
+
+        public async Task<Localizacao> SnapToRoadAsync(Localizacao ponto)
+        {
+            var coords = $"{ponto.Longitude.ToString(CultureInfo.InvariantCulture)},{ponto.Latitude.ToString(CultureInfo.InvariantCulture)}";
+            var url = $"nearest/v1/driving/{coords}?number=1";
+
+            _logger.LogInformation("[OSRM] Snapping coordenada: {Url}", url);
+
+            string jsonString;
+            try
+            {
+                jsonString = await _httpClient.GetStringAsync(url);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[OSRM] Falha ao tentar fazer snap da coordenada.");
+                return ponto; // Em caso de erro, retorna a original para não travar o processo
+            }
+
+            var response = JsonConvert.DeserializeObject<JObject>(jsonString);
+            var waypoint = response?["waypoints"]?[0];
+
+            if (waypoint == null || waypoint["location"] == null) return ponto;
+
+            var snappedCoords = waypoint["location"];
+            return new Localizacao
+            {
+                Longitude = snappedCoords![0]!.Value<double>(),
+                Latitude = snappedCoords![1]!.Value<double>()
+            };
+        }
     }
 }

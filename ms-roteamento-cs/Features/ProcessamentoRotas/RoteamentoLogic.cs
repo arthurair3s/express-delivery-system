@@ -21,5 +21,10 @@ namespace Features.ProcessamentoRotas
     {
       return await _routingProvider.GetRouteGeometryAsync(request.Pontos.ToList());
     }
+
+    public async Task<Localizacao> EncaixarNaEstrada(Localizacao ponto)
+    {
+      return await _routingProvider.SnapToRoadAsync(ponto);
+    }
   }
 }

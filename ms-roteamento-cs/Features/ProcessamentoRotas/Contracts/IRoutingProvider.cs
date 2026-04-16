@@ -8,5 +8,6 @@ namespace Features.ProcessamentoRotas.Contracts
     {
         Task<ResumoRotaResponse> GetRouteSummaryAsync(Localizacao origem, Localizacao destino);
         Task<GeometriaRotaResponse> GetRouteGeometryAsync(List<Localizacao> pontos);
+        Task<Localizacao> SnapToRoadAsync(Localizacao ponto);
     }
 }

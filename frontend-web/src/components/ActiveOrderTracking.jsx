@@ -72,7 +72,7 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: BUSCAR_CANDIDATOS,
-          variables: { restauranteId: restaurante.id, raioKm: 5.0 }
+          variables: { restauranteId: restaurante.id, raioKm: 3.0 }
         })
       })
       .then(r => r.json())
