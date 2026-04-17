@@ -1,6 +1,6 @@
 # 📦 Express Delivery - Real-time Microservices Simulation
 
-Este projeto é um ecossistema de alta performance projetado para demonstrar a aplicação prática de arquiteturas modernas e escaláveis. Desenvolvido com foco em **Microserviços**, **Comunicação gRPC** e **Geoprocessamento**, ele serve como um demonstrador técnico de conceitos robustos de engenharia de software para portfólio de alto nível.
+Este projeto é um ecossistema de alta performance projetado para demonstrar a aplicação prática de arquiteturas modernas e escaláveis. Desenvolvido com foco em **Microserviços**, **Comunicação gRPC** e **Geoprocessamento**, o foco principal reside na implementação de padrões de resiliência e baixa latência em sistemas distribuídos..
 
 ---
 
