@@ -1,5 +1,6 @@
 import amqp from 'amqplib';
 import { IEventPublisher } from '../../application/ports/IEventPublisher.js';
+import { eventosPublicados } from '../../observability/metrics.js';
 
 export class RabbitMQPublisher implements IEventPublisher {
   private connection: amqp.ChannelModel | null = null;
@@ -100,6 +101,7 @@ export class RabbitMQPublisher implements IEventPublisher {
       const activeChannel = this.channel;
       if (!activeChannel) {
         console.warn('RabbitMQ channel is not available. Message dropped.');
+        eventosPublicados.add(1, { routing_key: routingKey, resultado: 'descartado' });
         return false;
       }
       
@@ -108,9 +110,11 @@ export class RabbitMQPublisher implements IEventPublisher {
         persistent: true,
       });
       console.log(`[Event Published] Exchange: ${this.exchangeName}, Key: ${routingKey}`);
+      eventosPublicados.add(1, { routing_key: routingKey, resultado: 'publicado' });
       return result;
     } catch (err) {
       console.error('Error publishing event to RabbitMQ:', err);
+      eventosPublicados.add(1, { routing_key: routingKey, resultado: 'erro' });
       return false;
     }
   }

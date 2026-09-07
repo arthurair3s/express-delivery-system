@@ -34,6 +34,8 @@ from sqlalchemy.orm import Session
 from database import engine, Base, get_db
 # pyrefly: ignore [missing-import]
 from models import RestauranteReplica, ProdutoReplica, AssinaturaRestaurante
+# pyrefly: ignore [missing-import]
+from prometheus_client import make_asgi_app
 from messaging.kafka_consumer import KafkaCDCConsumer
 import replica
 from services.recommendation_service import RecommendationService
@@ -74,6 +76,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# o Prometheus raspa /metrics na mesma porta do FastAPI. as métricas de negócio
+# ficam em observability.py e são incrementadas pelo consumidor de CDC.
+app.mount("/metrics", make_asgi_app())
 
 # instrumenta o app fastapi para gerar traces automáticos
 FastAPIInstrumentor.instrument_app(app)

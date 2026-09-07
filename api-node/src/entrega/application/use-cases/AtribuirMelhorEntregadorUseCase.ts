@@ -6,6 +6,7 @@ import type { IRoteamentoService } from '../../../roteamento/application/ports/I
 import { Entrega, EntregaInvalidaError } from '../../domain/Entrega.js'
 import { StatusEntrega } from '../../domain/StatusEntrega.js'
 import { logger } from '../../../shared/utils/logger.js'
+import { entregasAtribuidas } from '../../../shared/observability/metrics.js'
 
 export class AtribuirMelhorEntregadorUseCase {
   constructor(
@@ -95,6 +96,8 @@ export class AtribuirMelhorEntregadorUseCase {
       )
       result = await this.repository.criarEntrega(entrega)
     }
+
+    entregasAtribuidas.add(1, { origem: 'requisicao' })
 
     if (melhor.statusObj.estaDisponivel()) {
       try {

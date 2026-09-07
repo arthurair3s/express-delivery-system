@@ -6,6 +6,7 @@ import type { IPagamentoStrategy } from '../ports/IPagamentoStrategy.js'
 import { Pagamento } from '../../domain/Pagamento.js'
 import { Dinheiro } from '../../../shared/domain/value-objects/Dinheiro.js'
 import { StatusPagamento } from '../../domain/StatusPagamento.js'
+import { pagamentosProcessados } from '../../../shared/observability/metrics.js'
 import { PagamentoPixStrategy } from '../../infrastructure/strategies/PagamentoPixStrategy.js'
 import { PagamentoCartaoStrategy } from '../../infrastructure/strategies/PagamentoCartaoStrategy.js'
 import { PagamentoStripeStrategy } from '../../infrastructure/strategies/PagamentoStripeStrategy.js'
@@ -60,6 +61,7 @@ export class ProcessarPagamentoUseCase {
     }
 
     const result = await this.repository.criarPagamento(pagamento)
+    pagamentosProcessados.add(1, { metodo: metodoNorm, resultado: result.status })
 
     if (result.status === 'APROVADO') {
       this.publicarEventoAprovado(result).catch((err: unknown) => {

@@ -10,6 +10,7 @@ from typing import Optional
 from kafka import KafkaConsumer
 from database import SessionLocal
 from replica import grupo_consumidor
+from observability import eventos_cdc, eventos_cdc_erro
 from models import (
     RestauranteReplica,
     CategoriaReplica,
@@ -140,8 +141,10 @@ class KafkaCDCConsumer:
             elif topico == TOPICO_ITENS:
                 self._item_pedido(db, op, antes, depois)
             db.commit()
+            eventos_cdc.labels(tabela=topico.removeprefix(PREFIXO), operacao=op or "?").inc()
         except Exception as e:
             db.rollback()
+            eventos_cdc_erro.labels(tabela=topico.removeprefix(PREFIXO)).inc()
             logger.error(f"Erro ao aplicar mudança de '{topico}' (op={op}): {e}")
         finally:
             db.close()

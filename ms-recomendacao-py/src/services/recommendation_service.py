@@ -2,6 +2,7 @@
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 from models import RestauranteReplica, AssinaturaRestaurante
+from observability import insights_gerados
 from services.recommendation_strategy import (
     GratuitoInsightStrategy,
     PremiumInsightStrategy
@@ -44,4 +45,5 @@ class RecommendationService:
             strategy = self.gratuito_strategy
 
         # Executa e gera os insights
+        insights_gerados.labels(plano=plano.upper()).inc()
         return strategy.gerar_insights(db, restaurante_id)

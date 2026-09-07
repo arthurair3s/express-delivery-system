@@ -1,23 +1,29 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
+  # O Backend Core expõe as métricas num servidor próprio do exporter do
+  # OpenTelemetry, separado da porta do GraphQL.
   - job_name: 'api-node'
     static_configs:
-      - targets: ['api:4000']
+      - targets: ['api:9464']
 
+  # Os serviços .NET servem gRPC em h2c e métricas em HTTP/1.1. Sem TLS o
+  # Kestrel não consegue os dois no mesmo listener, então cada um tem a sua porta.
   - job_name: 'ms-entregadores'
     static_configs:
-      - targets: ['ms-entregadores:5001']
+      - targets: ['ms-entregadores:9465']
 
   - job_name: 'ms-roteamento'
     static_configs:
-      - targets: ['ms-roteamento:5002']
+      - targets: ['ms-roteamento:9466']
 
+  # O FastAPI monta /metrics na mesma porta da API HTTP.
   - job_name: 'ms-recomendacao'
     static_configs:
       - targets: ['ms-recomendacao:8001']

@@ -4,6 +4,7 @@ import { Pedido, PedidoInvalidoError } from '../../domain/Pedido.js';
 import { Coordenada } from '../../../shared/domain/value-objects/Coordenada.js';
 import { Dinheiro } from '../../../shared/domain/value-objects/Dinheiro.js';
 import { StatusPedido } from '../../domain/StatusPedido.js';
+import { pedidosCriados } from '../../../shared/observability/metrics.js';
 
 export interface ConfirmarPedidoInput {
   usuario_id: string | number;
@@ -42,6 +43,7 @@ export class ConfirmarPedidoUseCase {
     );
 
     const result = await this.repository.criarPedido(pedido);
+    pedidosCriados.add(1, { restaurante_id: String(restaurante_id) });
 
     return result;
   }

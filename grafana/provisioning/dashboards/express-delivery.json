@@ -1,0 +1,178 @@
+{
+  "uid": "express-delivery",
+  "title": "Express Delivery — Visão Operacional",
+  "tags": ["express-delivery"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Negócio",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Pedidos criados (1h)",
+      "description": "Pedidos confirmados pelo cliente. Se cair a zero com tráfego no gateway, o problema está entre o checkout e o banco.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] } },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "targets": [
+        { "expr": "sum(increase(pedidos_criados_total[1h]))", "legendFormat": "pedidos", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Entregas atribuídas (1h)",
+      "description": "Entregas que receberam um entregador, pela via síncrona ou pelo evento entrega.atribuida.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [
+        { "expr": "sum(increase(entregas_atribuidas_total[1h]))", "legendFormat": "entregas", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Eventos descartados para a DLQ (1h)",
+      "description": "Mensagens rejeitadas pelo consumidor. Qualquer valor acima de zero merece inspeção na fila morta.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null }, { "color": "red", "value": 1 }] } },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [
+        { "expr": "sum(increase(eventos_descartados_total[1h])) or vector(0)", "legendFormat": "descartados", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Serviços expondo métricas",
+      "description": "Alvos que o Prometheus consegue raspar. Abaixo de 4, algum serviço está fora do ar.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "max": 4, "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null }, { "color": "orange", "value": 3 }, { "color": "green", "value": 4 }] } },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [
+        { "expr": "count(up{job=~\"api-node|ms-entregadores|ms-roteamento|ms-recomendacao\"} == 1)", "legendFormat": "no ar", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Pagamentos por método e resultado",
+      "description": "Taxa de pagamentos processados. Uma queda concentrada num método isola o problema na estratégia correspondente.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        { "expr": "sum by (metodo, resultado) (rate(pagamentos_processados_total[5m]))",
+          "legendFormat": "{{metodo}} · {{resultado}}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Eventos publicados no RabbitMQ",
+      "description": "Publicações por routing key. O rótulo resultado separa publicado de descartado — descarte indica broker indisponível.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        { "expr": "sum by (routing_key, resultado) (rate(eventos_publicados_total[5m]))",
+          "legendFormat": "{{routing_key}} · {{resultado}}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Replicação (CDC)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Eventos de CDC aplicados por tabela",
+      "description": "Se esta série achatar enquanto há escrita no banco principal, a réplica analítica parou de acompanhar.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 16 },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10, "stacking": { "mode": "normal" } } },
+        "overrides": []
+      },
+      "targets": [
+        { "expr": "sum by (tabela) (rate(cdc_eventos_aplicados_total[5m]))",
+          "legendFormat": "{{tabela}}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Versão do schema da réplica",
+      "description": "Muda quando as tabelas derivadas são reconstruídas a partir do tópico Kafka.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none" },
+      "targets": [
+        { "expr": "max(replica_schema_versao)", "legendFormat": "versão", "refId": "A" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Saúde técnica",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência HTTP no percentil 95",
+      "description": "Duração das requisições atendidas, por serviço.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 25 },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "lineWidth": 2, "fillOpacity": 5 } },
+        "overrides": []
+      },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (job, le) (rate(http_server_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{job}}", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Coletas de lixo nos serviços .NET",
+      "description": "Coletas por geração. Crescimento sustentado na gen2 sugere pressão de memória.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 25 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 5 } },
+        "overrides": []
+      },
+      "targets": [
+        { "expr": "sum by (job, gc_heap_generation) (rate(dotnet_gc_collections_total[5m]))",
+          "legendFormat": "{{job}} · {{gc_heap_generation}}", "refId": "A" }
+      ]
+    }
+  ]
+}

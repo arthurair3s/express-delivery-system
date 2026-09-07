@@ -2,7 +2,16 @@ apiVersion: 1
 
 datasources:
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090
     isDefault: true
+
+  # Sem este datasource o Grafana não conseguia abrir os traces, embora os
+  # diagramas de arquitetura já descrevessem a ligação.
+  - name: Jaeger
+    uid: jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686

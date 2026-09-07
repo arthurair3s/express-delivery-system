@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: ${DB_MAIN_NAME}
     command: ["postgres", "-c", "wal_level=logical", "-c", "max_wal_senders=4", "-c", "max_replication_slots=4"]
     ports:
-      - '5435:5432'
+      - '5441:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -29,7 +29,7 @@ services:
       POSTGRES_PASSWORD: ${DB_ENTREGADORES_PASS}
       POSTGRES_DB: ${DB_ENTREGADORES_NAME}
     ports:
-      - '5434:5432'
+      - '5442:5432'
     volumes:
       - postgres_entregadores_data:/var/lib/postgresql/data
     healthcheck:
@@ -55,7 +55,8 @@ services:
       dockerfile: ms-entregadores-cs/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:5001
+      GRPC_PORT: 5001
+      METRICS_PORT: 9465
       ConnectionStrings__DefaultConnection: Host=postgres_entregadores;Database=${DB_ENTREGADORES_NAME};Username=${DB_ENTREGADORES_USER};Password=${DB_ENTREGADORES_PASS}
       ConnectionStrings__RedisConnection: redis:6379
       RabbitMQ__Host: rabbitmq
@@ -85,7 +86,8 @@ services:
       dockerfile: ms-roteamento-cs/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:5002
+      GRPC_PORT: 5002
+      METRICS_PORT: 9466
       OSRM_URL: http://osrm-server:5000/
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
       OTEL_SERVICE_NAME: ms-roteamento
@@ -326,7 +328,7 @@ services:
       POSTGRES_PASSWORD: ${DB_RECOMENDACAO_PASS}
       POSTGRES_DB: ${DB_RECOMENDACAO_NAME}
     ports:
-      - '5436:5432'
+      - '5443:5432'
     volumes:
       - postgres_recomendacao_data:/var/lib/postgresql/data
     healthcheck:

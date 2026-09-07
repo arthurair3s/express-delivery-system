@@ -15,6 +15,7 @@ import logging
 from sqlalchemy import select
 from database import engine, SessionLocal, Base
 from models import MetadadoReplica, TABELAS_DERIVADAS
+from observability import replica_versao
 
 logger = logging.getLogger("Replica")
 
@@ -35,6 +36,7 @@ def grupo_consumidor() -> str:
 
 
 def preparar() -> None:
+    replica_versao.set(VERSAO_SCHEMA_REPLICA)
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()

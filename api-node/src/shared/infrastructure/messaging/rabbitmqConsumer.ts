@@ -1,5 +1,6 @@
 import amqp from 'amqplib';
 import { diContainer } from '../container.js';
+import { eventosDescartados, entregasAtribuidas } from '../../observability/metrics.js';
 
 export class RabbitMQConsumer {
   private connection: amqp.ChannelModel | null = null;
@@ -105,9 +106,11 @@ export class RabbitMQConsumer {
             status: status || 'ATRIBUIDA'
           });
 
+          entregasAtribuidas.add(1, { origem: 'evento' });
           chan.ack(msg);
         } catch (err) {
           console.error(`[Consumer] Error processing message, enviando para a DLQ '${this.dlqQueueName}':`, err);
+          eventosDescartados.add(1, { fila: this.queueName });
           chan.nack(msg, false, false);
         }
       });
