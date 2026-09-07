@@ -13,6 +13,10 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    // alguns módulos constroem o container de DI no import, e o JwtTokenService
+    // aborta sem segredo. um valor de teste mantém `npm test` funcionando sem
+    // depender do .env da máquina.
+    env: { JWT_SECRET: 'segredo-de-teste' },
     server: {
       deps: { inline: [/graphql/, /@graphql-tools/] },
     },

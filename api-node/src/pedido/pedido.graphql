@@ -1,6 +1,6 @@
 type Pedido {
   id: ID!
-  usuario: Usuario
+  usuario: UsuarioPublico
   restaurante_id: ID
   status: String
   valor_total: Float

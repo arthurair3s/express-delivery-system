@@ -1,6 +1,6 @@
 type Avaliacao {
   id: ID!
-  usuario: Usuario!
+  usuario: UsuarioPublico!
   restaurante: Restaurante!
   nota: Int
   comentario: String

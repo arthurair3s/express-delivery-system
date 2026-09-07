@@ -50,6 +50,11 @@ extend type Mutation {
     longitude: Float!
   ): Boolean @auth(roles: ["ENTREGADOR"])
 
-  # Utilitário de seed da demo: exige login, sem exigir perfil.
+  # Utilitário de simulação, deliberadamente aberto a qualquer autenticado.
+  #
+  # Cria uma frota fictícia para que dê para exercitar atribuição de corridas,
+  # rastreamento e roteamento sem precisar de entregadores reais cadastrados. Não
+  # tem uso fora de desenvolvimento, e num ambiente exposto ao público seria
+  # restrito a um perfil administrativo ou removido do schema.
   povoarFrota: Boolean @auth
 }

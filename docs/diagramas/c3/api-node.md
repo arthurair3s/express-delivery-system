@@ -87,6 +87,14 @@ A diretiva é o middleware central de autorização: a exigência é declarada n
 e aplicada por transformação do schema, em vez de repetida em cada resolver. O que
 não tem `@auth` é público por decisão explícita.
 
+**O que a diretiva não cobre:** ela decide campo a campo e não enxerga a travessia
+do grafo. Um campo liberado pode servir de porta para um tipo que carrega muito
+mais do que a tela precisa — foi o caso de `pedidosPorRestaurante → usuario`, que
+alcançava a PII do cliente e, por `Usuario.pedidos`, o histórico dele nos
+concorrentes. A defesa é de modelagem, não de diretiva: as relações aninhadas
+devolvem `UsuarioPublico`, com `id`, `nome` e `endereco`, e a conta completa só é
+alcançável por `me`.
+
 ## 3. Pedido, entrega e roteamento
 
 ```mermaid

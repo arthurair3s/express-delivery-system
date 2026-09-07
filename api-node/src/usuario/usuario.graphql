@@ -16,9 +16,23 @@ type LoginResponse {
   usuario: Usuario!
 }
 
+# Projeção mínima de um usuário, para quando ele aparece como parte do recurso
+# de outra pessoa: o lojista precisa saber para quem entregar, não o e-mail, o
+# telefone nem as coordenadas de casa do cliente.
+#
+# Sem esta separação, `pedidosPorRestaurante { usuario { ... } }` alcançava a PII
+# completa e, por `Usuario.pedidos`, o histórico do cliente nos concorrentes.
+type UsuarioPublico {
+  id: ID!
+  nome: String!
+  endereco: String
+}
+
 extend type Query {
-  usuarios: [Usuario] @auth(roles: ["RESTAURANTE"])
-  usuario(id: ID!): Usuario @auth
+  # `usuarios` e `usuario(id)` foram removidas: nenhuma tela as consumia, e
+  # juntas davam a qualquer autenticado a lista completa de usuários e a leitura
+  # de qualquer conta pelo id. O acesso à própria conta é `me`; os próprios
+  # pedidos, `meusPedidos`.
   me: Usuario @auth
 }
 

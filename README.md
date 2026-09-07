@@ -195,6 +195,7 @@ Com base nas últimas evoluções de arquitetura descritas no histórico do proj
 *   **Isolamento Completo de Bancos de Dados**: Bancos de dados PostgreSQL dedicados para o núcleo principal (`postgres_db`), entregadores (`postgres_entregadores`) e recomendações B2B (`postgres_recomendacao`), reduzindo drasticamente o acoplamento físico.
 *   **Cancelamento Dinâmico de Simulação / Override de Localização**: O mecanismo de simulação autônoma de GPS é cancelado imediatamente quando o entregador atualiza sua geolocalização manualmente no painel, garantindo que o backend respeite o ponto selecionado pelo usuário sem concorrência de threads/timeouts.
 *   **Envio Resiliente de E-mails via HTTP REST**: O microserviço de notificações autodetecta a presença da credencial de token do Mailtrap para alternar o envio de emails do protocolo SMTP tradicional para a API REST HTTP, contornando bloqueios de portas de e-mail típicos em ambientes de produção na nuvem (como no Railway).
+*   **Projeção mínima nas relações do grafo**: a diretiva `@auth` protege campo a campo, mas não enxerga a travessia. Um lojista legítimo, indo por `pedidosPorRestaurante → usuario`, alcançava e-mail, telefone, coordenadas de casa do cliente e — por `Usuario.pedidos` — o histórico dele nos restaurantes concorrentes. As relações aninhadas passaram a devolver um `UsuarioPublico` com apenas `id`, `nome` e `endereco`; a conta completa só é acessível pelo próprio dono, via `me`. Há teste de regressão fixando essa forma.
 *   **Autorização declarativa no schema GraphQL**: uma diretiva `@auth(roles: [...])` aplicada por transformação de schema embrulha o resolver de cada campo protegido. O que é público — catálogo, login, registro — é público por ausência explícita da diretiva, legível direto no SDL. Argumentos de identidade (`usuario_id`, `entregador_id`) foram **removidos do contrato**: o dono de cada recurso vem do token, então forjar identidade deixou de ser expressável.
 *   **Mensageria Assíncrona com RabbitMQ**: Atribuição de entregadores guiada por eventos (`pedido.confirmado` e `entrega.atribuida`). As cinco filas têm **DLQ dedicada**, isolada por `x-dead-letter-routing-key` em uma DLX compartilhada — uma mensagem que falha fica retida para inspeção em vez de ser descartada.
 *   **Change Data Capture com Kafka + Debezium**: a réplica analítica do `ms-recomendacao` é derivada do WAL do PostgreSQL, não publicada pela aplicação. Isso elimina o *dual write* — o evento nasce de uma transação já commitada — e captura **toda** escrita, inclusive seed e SQL manual, que nunca passariam pelos resolvers. O Kafka roda em **modo KRaft**, sem Zookeeper, e o connector é registrado automaticamente no boot.
@@ -267,7 +268,15 @@ Nenhuma suíte sobe contêiner: os testes de CDC usam SQLite em memória e os de
 caso de uso usam dublês das portas. A suíte inteira roda em segundos, que é a
 condição para alguém de fato executá-la.
 
-**Dois bugs reais apareceram ao escrever esses testes:**
+**Três achados de segurança e correção, todos com teste de regressão:**
+
+0. O grafo GraphQL expunha mais que qualquer tela consumia. Autorização por campo
+   não bloqueia travessia: bastava partir de um campo liberado para chegar à PII
+   do cliente e ao histórico dele na concorrência. Resolvido com um tipo de
+   projeção nas relações, sem tocar no frontend — ele já pedia só `nome` e
+   `endereco`.
+
+**E dois bugs de implementação:**
 
 1. `DomainError` fixava `DomainError.prototype` no construtor, o que descartava o
    protótipo de toda subclasse. `erro instanceof PedidoInvalidoError` devolvia
