@@ -91,5 +91,19 @@ exceção. Duas escolhas garantem convergência:
 Isso não é só afirmado: `tests/test_cdc_consumer.py` reprocessa o tópico inteiro
 e verifica que as contagens não mudam.
 
+## A réplica é descartável, e o compose leva isso a sério
+
+O banco analítico roda em `tmpfs`: some a cada `docker compose down` e é
+reconstruído pelo snapshot do Debezium na subida seguinte. Persistir estado
+derivado não traz benefício e cria deriva — o `prisma db push --force-reset` do
+Backend Core derruba o schema da origem, e DDL não é capturado por logical
+decoding, então as linhas antigas sumiriam sem gerar evento de delete e a réplica
+guardaria órfãos.
+
+Pelo mesmo motivo a publication do Postgres é criada `FOR ALL TABLES`. Com uma
+lista fixa de tabelas, o `DROP TABLE` do reset as removia da publication e a task
+do Debezium morria em silêncio: o CDC parava de funcionar a partir da segunda
+subida do ambiente.
+
 ---
 [⬅️ Índice do Nível 3](README.md) · [Nível 2: Contêineres](../c2/c4_l2_container.md)

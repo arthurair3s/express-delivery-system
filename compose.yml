@@ -114,8 +114,8 @@ services:
 
   api:
     build:
-      context: ./api-node
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-node/Dockerfile
     expose:
       - '4000'
     environment:
@@ -329,8 +329,16 @@ services:
       POSTGRES_DB: ${DB_RECOMENDACAO_NAME}
     ports:
       - '5443:5432'
-    volumes:
-      - postgres_recomendacao_data:/var/lib/postgresql/data
+    # Estado derivado mora em tmpfs de propósito: tudo aqui é reconstruído pelo
+    # replay do tópico Kafka a cada subida. Persistir a réplica só criaria deriva,
+    # porque o `prisma db push --force-reset` do api derruba o schema da origem e
+    # DDL não é capturado por logical decoding — as linhas somem sem gerar evento
+    # de delete, e a réplica ficaria com órfãos até o id ser reutilizado.
+    #
+    # Só declarar `volumes: []` não bastaria: a imagem do Postgres tem VOLUME no
+    # Dockerfile, e o Docker criaria um volume anônimo que sobrevive ao down.
+    tmpfs:
+      - /var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${DB_RECOMENDACAO_USER} -d ${DB_RECOMENDACAO_NAME}']
       interval: 5s
@@ -406,4 +414,3 @@ networks:
 volumes:
   postgres_data:
   postgres_entregadores_data:
-  postgres_recomendacao_data:

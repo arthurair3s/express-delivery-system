@@ -165,7 +165,10 @@ docker compose up --build
 4.  **Ações Rápidas**: Ao realizar um override manual (arrastando o pino ou teletransportando-se), qualquer simulação autônoma ativa para a entrega em questão é interrompida no backend para respeitar a posição selecionada por você.
 
 > [!CAUTION]
-> **Persistência de Dados**: O arquivo `compose.yml` está configurado com `--force-reset`. Isso garante que o ambiente de teste sempre inicie em um estado limpo e controlado.
+> **Persistência de dados**: o serviço `api` roda `prisma db push --force-reset` a
+> cada subida, então o banco principal sempre começa limpo e semeado. O banco
+> analítico acompanha: ele roda em `tmpfs` e é reconstruído pelo snapshot do
+> Debezium, porque é estado derivado e persistir isso só geraria deriva.
 
 ---
 

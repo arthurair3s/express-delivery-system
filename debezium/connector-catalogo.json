@@ -19,6 +19,6 @@
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "key.converter.schemas.enable": "false",
     "value.converter.schemas.enable": "false",
-    "publication.autocreate.mode": "filtered"
+    "publication.autocreate.mode": "all_tables"
   }
 }

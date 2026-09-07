@@ -3,8 +3,8 @@ version: '3.8'
 services:
   api:
     build:
-      context: ./api-node
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-node/Dockerfile
     expose:
       - '4000'
     environment:
