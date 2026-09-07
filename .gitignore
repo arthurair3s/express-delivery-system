@@ -81,3 +81,7 @@ docs/standards/
 
 # Config declarativa do Kong gerada pelo entrypoint a partir do template
 kong/kong.yml
+
+# artefatos de teste .NET
+ms-tests-cs/bin/
+ms-tests-cs/obj/

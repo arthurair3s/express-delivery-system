@@ -50,7 +50,7 @@ graph TB
     subgraph obs ["Observabilidade"]
         direction LR
         jaeger["<b>Jaeger</b><br><i>[All-in-One]</i><br>Traces distribuídos"]:::obs
-        prom["<b>Prometheus</b><br>alvos configurados,<br>sem /metrics ainda"]:::obs
+        prom["<b>Prometheus</b><br>raspa /metrics dos<br>quatro serviços"]:::obs
         graf["<b>Grafana</b><br>Painéis"]:::obs
     end
 
@@ -91,7 +91,7 @@ graph TB
     msrot -. "OTLP" .-> jaeger
     msrec -. "OTLP" .-> jaeger
     msnot -. "OTLP" .-> jaeger
-    prom -. "scrape" .-> api
+    prom -. "scrape /metrics" .-> api
     graf --> prom
     graf --> jaeger
 ```

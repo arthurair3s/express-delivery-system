@@ -26,9 +26,26 @@ public static class EntregadorMapper
       Veiculo = entity.Veiculo ?? string.Empty,
       Latitude = lat,
       Longitude = lon,
-      Status = Enum.TryParse<StatusEntregador>(entity.Status, true, out var statusEnum) ? statusEnum : StatusEntregador.Offline
+      Status = MapearStatus(entity.Status)
     };
   }
+
+  /// <summary>
+  /// Traduz o status textual do banco para o enum do contrato gRPC.
+  ///
+  /// Não dá para usar Enum.TryParse aqui: o gerador de protobuf converte
+  /// EM_ENTREGA em EmEntrega, então o parse do valor gravado no banco falhava e
+  /// caía no fallback — um entregador ocupado era reportado como OFFLINE.
+  /// </summary>
+  private static StatusEntregador MapearStatus(string? status) =>
+    (status ?? string.Empty).Trim().ToUpperInvariant() switch
+    {
+      StatusEntregadorConstants.Disponivel => StatusEntregador.Disponivel,
+      StatusEntregadorConstants.EmEntrega => StatusEntregador.EmEntrega,
+      StatusEntregadorConstants.Offline => StatusEntregador.Offline,
+      // status desconhecido tira o entregador do radar, que é o padrão seguro
+      _ => StatusEntregador.Offline
+    };
 
   public static ListaEntregadoresResponse ToListResponse(this IEnumerable<Entregador> entregadores)
   {

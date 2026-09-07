@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "dev": "tsx watch ./src/index.ts",
-    "seed": "node ./prisma/seed.js"
+    "seed": "node ./prisma/seed.js",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -50,6 +51,7 @@
     "dotenv": "^17.3.1",
     "prisma": "^7.5.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
   }
 }

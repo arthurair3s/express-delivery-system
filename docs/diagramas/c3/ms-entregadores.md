@@ -62,6 +62,12 @@ delegação — o ganho não paga o custo. O único método com lógica real é
 nela brigaria com o change tracker. As regras de transição de status vivem no
 `StatusEntregador` do Backend Core.
 
+**O mapeamento de status precisa ser explícito.** O gerador de protobuf converte
+`EM_ENTREGA` em `EmEntrega`, então `Enum.TryParse` sobre o valor gravado no banco
+falhava e caía no fallback — um entregador ocupado era reportado como offline
+pelo gRPC. O `EntregadorMapper` passou a traduzir com um `switch` sobre as
+constantes, e há teste cobrindo cada valor.
+
 **A escrita e a publicação não são atômicas.** O consumidor atualiza o status do
 entregador no banco e depois publica `entrega.atribuida` em passos separados: se o
 processo cair no meio, o pedido fica sem entregador atribuído. É a mesma dívida

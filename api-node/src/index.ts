@@ -10,6 +10,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { aplicarAuthDirective } from './shared/presentation/graphql/authDirective.js';
 
 import { resolvers } from './resolvers.js';
+import { DomainError } from './shared/errors/DomainError.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,10 +43,9 @@ const server = new ApolloServer<MyContext>({
   formatError: (formattedError, error: any) => {
     const originalError = error?.originalError || error;
 
-    if (
-      (originalError && originalError.name === 'DomainError') || 
-      (originalError instanceof Error && (originalError.name.endsWith('InvalidaError') || originalError.name.endsWith('InvalidoError')))
-    ) {
+    // com o protótipo das subclasses preservado, basta um instanceof: a
+    // comparação por sufixo do nome existia só porque ele não funcionava.
+    if (originalError instanceof DomainError) {
       return {
         ...formattedError,
         message: originalError.message,

@@ -14,6 +14,11 @@ export class DomainError extends Error {
     this.name = 'DomainError';
     this.code = code;
     this.details = details;
-    Object.setPrototypeOf(this, DomainError.prototype);
+
+    // new.target é a classe realmente instanciada, não DomainError. fixar
+    // DomainError.prototype aqui descartava o protótipo de toda subclasse, o que
+    // fazia `erro instanceof PedidoInvalidoError` devolver false em todo o
+    // sistema — só `instanceof DomainError` funcionava.
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }

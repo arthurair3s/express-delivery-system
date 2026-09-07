@@ -88,5 +88,8 @@ exceção. Duas escolhas garantem convergência:
 - `VendaProdutoAnalise.item_pedido_id` é `unique`, e é a chave natural da origem,
   o que impede duplicar vendas num replay.
 
+Isso não é só afirmado: `tests/test_cdc_consumer.py` reprocessa o tópico inteiro
+e verifica que as contagens não mudam.
+
 ---
 [⬅️ Índice do Nível 3](README.md) · [Nível 2: Contêineres](../c2/c4_l2_container.md)

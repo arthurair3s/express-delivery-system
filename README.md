@@ -183,7 +183,7 @@ docker compose up --build
 | **Mensageria** | RabbitMQ (AMQP) | Transporte de trabalho: atribuição de entregas e notificações, com DLQ por fila |
 | **Change Data Capture** | Apache Kafka (KRaft), Debezium 2.4 | Replicação de estado: o WAL do banco principal alimenta a réplica analítica do motor B2B |
 | **Observabilidade** | OpenTelemetry, Jaeger | Tracing distribuído ponta a ponta, correlacionando GraphQL, gRPC e fila |
-| **Métricas** *(incompleto)* | Prometheus, Grafana | Sobem no compose e o Prometheus tem os alvos configurados, mas **nenhum serviço expõe `/metrics` ainda** — as três stacks instrumentam apenas tracing |
+| **Métricas** | Prometheus, Grafana | Os quatro serviços expõem `/metrics`; o Grafana sobe com datasources e um dashboard de dez painéis já provisionados |
 
 ---
 
@@ -205,6 +205,8 @@ Com base nas últimas evoluções de arquitetura descritas no histórico do proj
 *   **Cache como decorator de repositório**: o cache-aside do Redis vive em um `CachedRestauranteRepository` que implementa a mesma porta do repositório real e é composto no container de DI. Resolvers e casos de uso não sabem que existe cache; a invalidação acontece no ponto por onde toda escrita passa.
 *   **Strategy Pattern para Regras de Negócio**: Utilizado para alternar dinamicamente métodos de pagamento (Pix, Cartão de Crédito com limite, Stripe) e níveis de planos de recomendação (Gratuito vs Premium).
 *   **Cache Distribuído Híbrido**: Redis operando como cache-aside de queries de alta leitura (como restaurantes e avaliações) e invalidação imediata em mutations para alta performance com consistência imediata.
+*   **Suíte de testes sem infraestrutura**: 108 testes cobrindo Value Objects, máquinas de estado, casos de uso com portas dubladas, o decorator de cache, a diretiva de autorização, os handlers de CDC e o mapeamento gRPC. Nenhum precisa de Docker, banco ou broker — é isso que a inversão de dependência compra. `./run-tests.sh` roda as quatro suítes.
+*   **Métricas de negócio, não só técnicas**: além de latência e volume vindos da instrumentação automática, contadores que respondem perguntas operacionais — pedidos criados, pagamentos por método e resultado, entregas atribuídas, mensagens descartadas para a DLQ e eventos de CDC aplicados por tabela. Um pico de erro aparece na latência; "nenhum pedido está sendo atribuído há dez minutos" só aparece com isso.
 *   **Monitoramento e Rastreamento Distribuído**: Rastreamento de latência e traces de ponta a ponta correlacionando requisições GraphQL com chamadas gRPC, processamento de filas e banco de dados, exportando para o Jaeger.
 
 ---
@@ -248,12 +250,43 @@ depende mais de um POST manual na API do Kafka Connect.
 
 ---
 
+## 🧪 Testes
+
+```bash
+./run-tests.sh
+```
+
+| Suíte | Ferramenta | Cobre |
+| :--- | :--- | :--- |
+| `api-node/tests` | Vitest | Value Objects, máquinas de estado, `AtribuirMelhorEntregadorUseCase`, decorator de cache, diretiva `@auth` |
+| `ms-tests-cs` | xUnit + NSubstitute | Mapeamento entidade ↔ contrato gRPC, lógica de roteamento |
+| `ms-recomendacao-py/tests` | pytest | Handlers de CDC, idempotência e replay, resolução de plano |
+| `ms-notificacoes-py/tests` | pytest | Renderização dos e-mails transacionais |
+
+Nenhuma suíte sobe contêiner: os testes de CDC usam SQLite em memória e os de
+caso de uso usam dublês das portas. A suíte inteira roda em segundos, que é a
+condição para alguém de fato executá-la.
+
+**Dois bugs reais apareceram ao escrever esses testes:**
+
+1. `DomainError` fixava `DomainError.prototype` no construtor, o que descartava o
+   protótipo de toda subclasse. `erro instanceof PedidoInvalidoError` devolvia
+   `false` nas 18 subclasses do sistema — e era por isso que o tratamento de erro
+   do GraphQL comparava sufixo de nome em vez de usar `instanceof`.
+
+2. O mapper do MS de Entregadores usava `Enum.TryParse` para converter o status
+   do banco no enum do contrato gRPC. Como o gerador de protobuf transforma
+   `EM_ENTREGA` em `EmEntrega`, o parse falhava e caía no fallback: **um
+   entregador ocupado era reportado como offline**.
+
+---
+
 ## 📡 Endpoints de Acesso (Via Gateway)
 *   **Aplicação Web (Frontend)**: [http://localhost:5173](http://localhost:5173)
 *   **GraphQL Playground (via Kong)**: [http://localhost:8000/graphql](http://localhost:8000/graphql)
 *   **OSRM (Direto)**: [http://localhost:5080](http://localhost:5080)
 *   **Jaeger Tracing Dashboard**: [http://localhost:16686](http://localhost:16686)
-*   **Grafana**: [http://localhost:3000](http://localhost:3000) *(sem métricas de aplicação ainda — ver roadmap)*
+*   **Grafana**: [http://localhost:3000](http://localhost:3000) — dashboard *Express Delivery — Visão Operacional*, provisionado
 *   **RabbitMQ Management**: [http://localhost:15672](http://localhost:15672)
 *   **Kafka UI (tópicos e connectors)**: [http://localhost:8080](http://localhost:8080)
 *   **Kafka Connect (API do Debezium)**: [http://localhost:8084/connectors](http://localhost:8084/connectors)
@@ -265,10 +298,10 @@ depende mais de um POST manual na API do Kafka Connect.
 Este projeto funciona como um **laboratório vivo de arquitetura de software**, mantendo sua base de código alinhada às melhores práticas do mercado.
 
 ### Próximas evoluções planejadas
-*   **Testes automatizados e CI**: hoje o repositório **não tem nenhum teste**. O plano é começar pelos Value Objects (`Dinheiro`, `Coordenada`, `Email`), pelas transições de `StatusEntrega`/`StatusPedido` e pelo `AtribuirMelhorEntregadorUseCase` com mocks das portas — os casos onde a Clean Architecture realmente paga —, com GitHub Actions rodando as três stacks.
+*   **Integração contínua**: as quatro suítes existem e rodam com um comando, mas **ainda não há pipeline**. A decisão foi consciente: primeiro construir testes que valem a pena executar, depois automatizá-los. O próximo passo é um workflow do GitHub Actions com três jobs em paralelo — `setup-node` para o Vitest, `setup-dotnet` para o xUnit e `setup-python` para os dois pytest —, disparado em push e pull request, com badge no topo deste README. Nada disso exige serviço de apoio, já que nenhuma suíte precisa de banco ou broker.
+*   **Ampliar a cobertura**: as suítes atuais focam em domínio e casos de uso. Faltam os adaptadores Prisma e os resolvers de ponta a ponta, que exigiriam banco efêmero via Testcontainers.
 *   **Outbox no fluxo de pedido**: a replicação de dados já não tem dual write, mas os eventos de trabalho do RabbitMQ têm. Um pedido confirmado sem entregador atribuído é falha visível — é o próximo alvo.
 *   **Circuit breaker no OSRM**: hoje há deadline e retry; falta o disjuntor. O ponto natural é o `OsrmProvider`, com Polly, por ser a única dependência externa com falha recorrente.
-*   **Expor `/metrics` nos serviços**: o Prometheus já sobe com os quatro alvos configurados e o Grafana já está provisionado, mas nenhuma das três stacks instrumenta métricas — só tracing. Hoje o scrape devolve 404 e os painéis ficam vazios.
 *   **Paginação e DataLoader**: nenhuma query de lista é paginada, e os resolvers de campo (`Avaliacao.usuario`, `Pedido.itens`) fazem N+1.
 *   **Migrations versionadas**: o `compose.yml` usa `prisma db push --force-reset`, o que é adequado para uma demo reproduzível, mas não deixa histórico de schema.
 

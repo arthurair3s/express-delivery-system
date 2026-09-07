@@ -39,6 +39,11 @@ Onde isso é violado hoje: `ProcessarPagamentoUseCase` importa as três estraté
 concretas de `infrastructure/strategies` e escolhe com um `switch`. A camada de
 aplicação deveria receber a estratégia já resolvida.
 
+O ganho concreto desse desenho é testabilidade: `AtribuirMelhorEntregadorUseCase`
+é exercitado em `tests/aplicacao` com dublês de todas as portas, sem banco, gRPC
+ou broker. Se um teste de caso de uso precisasse de Docker, a arquitetura não
+estaria fazendo o trabalho dela.
+
 ## 2. Autenticação e autorização
 
 ```mermaid
