@@ -10,7 +10,7 @@ Antes de descer nos níveis do C4, o mapa completo:
 **[Visão Geral da Arquitetura](docs/diagramas/visao-geral.md)** — todos os
 contêineres, os dois brokers e o pipeline de CDC num diagrama só.
 
-Existe também uma **[versão interativa](https://claude.ai/code/artifact/6f983440-cba3-46c3-be5b-edfc245d31ac)**:
+Existe também uma **[versão interativa](https://arthurair3s.github.io/express-delivery-system/diagramas/planta.html)**:
 clique numa peça para isolar as dependências dela, filtre por camada e leia a
 ficha técnica de cada contêiner. É a versão para apresentar o projeto.
 

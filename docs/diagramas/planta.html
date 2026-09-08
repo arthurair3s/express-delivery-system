@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planta do Express Delivery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --bg:#f4f6f9; --surface:#fff; --surface-2:#eef1f6;
+    --ink:#151a24; --muted:#5c6678; --faint:#8b93a3;
+    --line:#d9dee7; --line-strong:#c2c9d6;
+
+    --sync:#4453c9; --work:#a8560c; --cdc:#0d6e66; --obs:#6f7484;
+    --sync-bg:#eaecfa; --work-bg:#fbf0e3; --cdc-bg:#e4f2f0; --obs-bg:#eef0f3;
+    --person:#1d3a6b; --person-bg:#e7edf7;
+
+    --shadow:0 1px 2px rgba(21,26,36,.06), 0 8px 24px rgba(21,26,36,.06);
+    --r:10px;
+    --rail:250px; --drawer:340px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1017; --surface:#161c27; --surface-2:#1d2431;
+      --ink:#e6eaf2; --muted:#9aa3b5; --faint:#727b8d;
+      --line:#28303e; --line-strong:#3a4354;
+
+      --sync:#8d9bff; --work:#f0a24d; --cdc:#34d0bd; --obs:#8b91a2;
+      --sync-bg:#1b2140; --work-bg:#2e2115; --cdc-bg:#102b2a; --obs-bg:#1e232d;
+      --person:#a8c4ee; --person-bg:#182338;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1017; --surface:#161c27; --surface-2:#1d2431;
+    --ink:#e6eaf2; --muted:#9aa3b5; --faint:#727b8d;
+    --line:#28303e; --line-strong:#3a4354;
+
+    --sync:#8d9bff; --work:#f0a24d; --cdc:#34d0bd; --obs:#8b91a2;
+    --sync-bg:#1b2140; --work-bg:#2e2115; --cdc-bg:#102b2a; --obs-bg:#1e232d;
+    --person:#a8c4ee; --person-bg:#182338;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:15px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:Archivo,"IBM Plex Sans",system-ui,sans-serif; text-wrap:balance; margin:0}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  /* ── shell ─────────────────────────────────────────────── */
+  .shell{display:grid; grid-template-columns:var(--rail) minmax(0,1fr); min-height:100vh}
+
+  .rail{
+    border-right:1px solid var(--line); background:var(--surface);
+    padding:22px 20px 32px; display:flex; flex-direction:column; gap:26px;
+    position:sticky; top:0; align-self:stretch; max-height:100vh; overflow-y:auto;
+  }
+  .brand h1{font-size:20px; font-weight:700; letter-spacing:-.02em; line-height:1.2}
+  .brand p{margin:6px 0 0; font-size:12.5px; color:var(--muted); line-height:1.5}
+
+  .grp > h2{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:500;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
+    margin-bottom:10px;
+  }
+
+  .sw{display:flex; flex-direction:column; gap:2px}
+  .sw label{
+    display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:7px;
+    cursor:pointer; font-size:13.5px; transition:background .12s;
+  }
+  .sw label:hover{background:var(--surface-2)}
+  .sw input{position:absolute; opacity:0; width:0; height:0}
+  .sw label:focus-within{outline:2px solid var(--sync); outline-offset:1px}
+  .dash{width:26px; height:0; border-top-width:2.5px; flex:none; border-radius:2px}
+  .sw input:not(:checked) ~ .txt{color:var(--faint); text-decoration:line-through; text-decoration-thickness:1px}
+  .sw input:not(:checked) ~ .dash{opacity:.3}
+
+  .lg{display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:var(--muted)}
+  .lg div{display:flex; align-items:center; gap:9px}
+  .chip{width:15px; height:15px; border-radius:4px; border:1.5px solid; flex:none}
+
+  .hint{
+    font-size:12px; color:var(--faint); border-top:1px solid var(--line);
+    padding-top:16px; margin-top:auto; line-height:1.6;
+  }
+  .hint kbd{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; background:var(--surface-2);
+    border:1px solid var(--line); border-radius:4px; padding:1px 5px;
+  }
+
+  /* ── canvas ────────────────────────────────────────────── */
+  .stage{
+    position:relative; padding:24px 28px 40px; overflow-x:auto;
+    transition:padding-right .22s cubic-bezier(.4,0,.2,1);
+  }
+  /* com o painel aberto o palco cede espaço, em vez de ficar coberto por ele */
+  body.com-painel .stage{padding-right:calc(var(--drawer) + 28px)}
+  @media (max-width:900px){ body.com-painel .stage{padding-right:28px} }
+  .stage-head{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:14px}
+  .stage-head h2{font-size:15px; font-weight:600}
+  .stage-head span{font-size:13px; color:var(--muted)}
+  #reset{
+    margin-left:auto; font:inherit; font-size:12.5px; color:var(--muted);
+    background:var(--surface); border:1px solid var(--line); border-radius:7px;
+    padding:5px 12px; cursor:pointer; transition:.12s;
+  }
+  #reset:hover{border-color:var(--line-strong); color:var(--ink)}
+  #reset:focus-visible{outline:2px solid var(--sync); outline-offset:2px}
+
+  svg#map{width:100%; height:auto; min-width:900px; display:block}
+
+  .band{fill:none; stroke:var(--line); stroke-width:1; stroke-dasharray:3 4; rx:8}
+  .band-label{
+    font-family:"IBM Plex Mono",monospace; font-size:9.5px; font-weight:500;
+    letter-spacing:.13em; fill:var(--faint);
+  }
+
+  .node{cursor:pointer}
+  .node rect{fill:var(--surface); stroke:var(--line-strong); stroke-width:1.5; transition:filter .15s}
+  .node .nt{font-family:Archivo,sans-serif; font-size:13px; font-weight:600; fill:var(--ink)}
+  .node .ns{font-family:"IBM Plex Mono",monospace; font-size:9.5px; fill:var(--muted)}
+  .node:hover rect{filter:brightness(1.04)}
+  .node:focus-visible rect{stroke:var(--sync); stroke-width:2.5}
+  .node:focus{outline:none}
+
+  .n-person rect{fill:var(--person-bg); stroke:var(--person)}
+  .n-person .nt{fill:var(--person)}
+  .n-app rect{fill:var(--sync-bg); stroke:var(--sync)}
+  .n-msg rect{fill:var(--work-bg); stroke:var(--work)}
+  .n-cdc rect{fill:var(--cdc-bg); stroke:var(--cdc)}
+  .n-data rect{fill:var(--surface-2); stroke:var(--line-strong)}
+  .n-ext rect{fill:transparent; stroke:var(--obs); stroke-dasharray:5 3}
+  .n-obs rect{fill:var(--obs-bg); stroke:var(--obs)}
+
+  .edge{transition:opacity .18s}
+  .edge path,.edge line{fill:none; stroke-width:1.8; stroke-linecap:round}
+  .edge text{font-family:"IBM Plex Mono",monospace; font-size:9px; fill:var(--muted)}
+  .e-sync path,.e-sync line{stroke:var(--sync)}
+  .e-work path,.e-work line{stroke:var(--work); stroke-dasharray:7 4}
+  .e-cdc  path,.e-cdc  line{stroke:var(--cdc);  stroke-dasharray:2 4}
+  .e-obs  path,.e-obs  line{stroke:var(--obs);  stroke-dasharray:1 4; stroke-width:1.4}
+
+  .hidden{display:none}
+  .dim{opacity:.13}
+  .node.dim rect{filter:none}
+
+  /* ── drawer ────────────────────────────────────────────── */
+  .drawer{
+    position:fixed; top:0; right:0; width:var(--drawer); max-width:90vw; height:100vh;
+    background:var(--surface); border-left:1px solid var(--line); box-shadow:var(--shadow);
+    padding:26px 24px; overflow-y:auto; transform:translateX(101%);
+    transition:transform .22s cubic-bezier(.4,0,.2,1); z-index:20;
+  }
+  .drawer.open{transform:none}
+  .drawer .papel{
+    font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:500;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--sync);
+    margin:0 0 6px; padding-right:32px;
+  }
+  .drawer h3{font-size:19px; font-weight:700; letter-spacing:-.01em; padding-right:32px}
+  .drawer .stack{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted);
+    margin:7px 0 18px; line-height:1.6;
+  }
+  .drawer p{margin:0 0 16px; font-size:14px; color:var(--ink)}
+  .drawer dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:7px 14px; font-size:12.5px}
+  .drawer dt{font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.1em;
+             text-transform:uppercase; color:var(--faint); padding-top:2px}
+  .drawer dd{margin:0; color:var(--muted)}
+  .close{
+    position:absolute; top:20px; right:20px; width:30px; height:30px; border-radius:7px;
+    border:1px solid var(--line); background:var(--surface); color:var(--muted);
+    font-size:17px; line-height:1; cursor:pointer;
+  }
+  .close:hover{color:var(--ink); border-color:var(--line-strong)}
+  .close:focus-visible{outline:2px solid var(--sync); outline-offset:2px}
+
+  .note{
+    margin-top:22px; padding-top:16px; border-top:1px solid var(--line);
+    font-size:12.5px; color:var(--muted); line-height:1.65;
+  }
+  .note strong{color:var(--ink); font-weight:600}
+
+  /* ── foot ──────────────────────────────────────────────── */
+  .foot{
+    border-top:1px solid var(--line); margin:8px 28px 0; padding:22px 0 40px;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:26px;
+  }
+  .foot section h3{font-size:13.5px; font-weight:600; margin-bottom:7px}
+  .foot section p{margin:0; font-size:13px; color:var(--muted); line-height:1.6}
+  .foot code{font-family:"IBM Plex Mono",monospace; font-size:11.5px; background:var(--surface-2);
+             padding:1px 5px; border-radius:4px}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr}
+    .rail{position:static; max-height:none; border-right:none; border-bottom:1px solid var(--line)}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <h1>Planta do Express Delivery</h1>
+      <p>20 serviços no compose, 5 linguagens e dois brokers com papéis distintos. Clique numa peça para ver a ficha dela e isolar suas dependências.</p>
+    </div>
+
+    <div class="grp">
+      <h2>Camadas</h2>
+      <div class="sw">
+        <label><input type="checkbox" data-layer="sync" checked>
+          <span class="dash" style="border-top-style:solid; border-color:var(--sync)"></span>
+          <span class="txt">Síncrono</span></label>
+        <label><input type="checkbox" data-layer="work" checked>
+          <span class="dash" style="border-top-style:dashed; border-color:var(--work)"></span>
+          <span class="txt">Trabalho · RabbitMQ</span></label>
+        <label><input type="checkbox" data-layer="cdc" checked>
+          <span class="dash" style="border-top-style:dashed; border-color:var(--cdc)"></span>
+          <span class="txt">Replicação · CDC</span></label>
+        <label><input type="checkbox" data-layer="obs">
+          <span class="dash" style="border-top-style:dotted; border-color:var(--obs)"></span>
+          <span class="txt">Observabilidade</span></label>
+      </div>
+    </div>
+
+    <div class="grp">
+      <h2>Tipos</h2>
+      <div class="lg">
+        <div><span class="chip" style="background:var(--person-bg);border-color:var(--person)"></span>Pessoa</div>
+        <div><span class="chip" style="background:var(--sync-bg);border-color:var(--sync)"></span>Aplicação</div>
+        <div><span class="chip" style="background:var(--work-bg);border-color:var(--work)"></span>Mensageria</div>
+        <div><span class="chip" style="background:var(--cdc-bg);border-color:var(--cdc)"></span>Pipeline de CDC</div>
+        <div><span class="chip" style="background:var(--surface-2);border-color:var(--line-strong)"></span>Armazenamento</div>
+        <div><span class="chip" style="border-color:var(--obs);border-style:dashed"></span>Sistema externo</div>
+      </div>
+    </div>
+
+    <p class="hint">Clique numa peça para focar. <kbd>Esc</kbd> ou <em>Ver tudo</em> volta ao mapa completo.</p>
+  </aside>
+
+  <main class="stage">
+    <div class="stage-head">
+      <h2>Mapa de contêineres</h2>
+      <span>Portas indicadas são as internas da rede Docker</span>
+      <button id="reset" type="button">Ver tudo</button>
+    </div>
+
+    <svg id="map" viewBox="0 0 1160 600" role="img"
+         aria-label="Mapa da arquitetura em quatro colunas: logística à esquerda, o núcleo de requisição no centro, analítico e notificações à direita, e o pipeline de CDC na borda direita.">
+      <defs>
+        <marker id="ah-sync" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,1 L7,4 L0,7 z" fill="var(--sync)"/></marker>
+        <marker id="ah-work" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,1 L7,4 L0,7 z" fill="var(--work)"/></marker>
+        <marker id="ah-cdc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,1 L7,4 L0,7 z" fill="var(--cdc)"/></marker>
+        <marker id="ah-obs" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L7,4 L0,7 z" fill="var(--obs)"/></marker>
+      </defs>
+
+      <text class="band-label" x="60" y="160">LOGÍSTICA</text>
+      <text class="band-label" x="430" y="16">NÚCLEO DA REQUISIÇÃO</text>
+      <text class="band-label" x="800" y="160">ANÁLISE E NOTIFICAÇÃO</text>
+      <text class="band-label" x="1010" y="320">CDC</text>
+      <text class="band-label" x="700" y="522">OBSERVABILIDADE</text>
+
+      <!-- síncrono -->
+      <g class="edge e-sync" data-a="users" data-b="web">
+        <line x1="555" y1="70" x2="555" y2="88" marker-end="url(#ah-sync)"/></g>
+      <g class="edge e-sync" data-a="web" data-b="kong">
+        <line x1="555" y1="138" x2="555" y2="156" marker-end="url(#ah-sync)"/>
+        <text x="563" y="152">HTTPS</text></g>
+      <g class="edge e-sync" data-a="kong" data-b="api">
+        <line x1="555" y1="206" x2="555" y2="224" marker-end="url(#ah-sync)"/>
+        <text x="563" y="220">GraphQL</text></g>
+
+      <g class="edge e-sync" data-a="api" data-b="ent">
+        <line x1="428" y1="245" x2="274" y2="200" marker-end="url(#ah-sync)"/>
+        <text x="318" y="212">gRPC</text></g>
+      <g class="edge e-sync" data-a="api" data-b="rot">
+        <line x1="428" y1="272" x2="274" y2="340" marker-end="url(#ah-sync)"/>
+        <text x="318" y="322">gRPC</text></g>
+      <g class="edge e-sync" data-a="api" data-b="rec">
+        <line x1="682" y1="245" x2="796" y2="204" marker-end="url(#ah-sync)"/>
+        <text x="690" y="212">gRPC</text></g>
+
+      <g class="edge e-sync" data-a="api" data-b="pg1">
+        <line x1="489" y1="290" x2="489" y2="428" marker-end="url(#ah-sync)"/>
+        <text x="428" y="364">Prisma</text></g>
+      <g class="edge e-sync" data-a="api" data-b="rds">
+        <line x1="621" y1="290" x2="621" y2="428" marker-end="url(#ah-sync)"/>
+        <text x="629" y="364">cache</text></g>
+      <g class="edge e-sync" data-a="api" data-b="stripe">
+        <line x1="672" y1="290" x2="734" y2="428" marker-end="url(#ah-sync)"/>
+        <text x="716" y="360">REST</text></g>
+
+      <g class="edge e-sync" data-a="ent" data-b="pg2">
+        <line x1="165" y1="224" x2="165" y2="244" marker-end="url(#ah-sync)"/></g>
+      <g class="edge e-sync" data-a="ent" data-b="rds">
+        <path d="M270,182 L302,182 L302,306 L556,306 L556,455 L560,455" marker-end="url(#ah-sync)"/>
+        <text x="330" y="300">Redis GEO</text></g>
+      <g class="edge e-sync" data-a="rot" data-b="osrm">
+        <line x1="165" y1="380" x2="165" y2="400" marker-end="url(#ah-sync)"/></g>
+      <g class="edge e-sync" data-a="rec" data-b="pg3">
+        <line x1="890" y1="224" x2="890" y2="244" marker-end="url(#ah-sync)"/></g>
+      <g class="edge e-sync" data-a="not" data-b="mailtrap">
+        <line x1="890" y1="380" x2="890" y2="400" marker-end="url(#ah-sync)"/></g>
+
+      <!-- trabalho -->
+      <g class="edge e-work" data-a="api" data-b="rmq">
+        <line x1="470" y1="290" x2="424" y2="328" marker-end="url(#ah-work)"/>
+        <text x="436" y="316">publica</text></g>
+      <g class="edge e-work" data-a="rmq" data-b="ent">
+        <path d="M290,346 L278,346 L278,214 L272,214" marker-end="url(#ah-work)"/>
+        <text x="150" y="306">pedido.confirmado</text></g>
+      <g class="edge e-work" data-a="ent" data-b="rmq">
+        <path d="M270,200 L286,200 L286,362 L288,362" marker-end="url(#ah-work)"/>
+        <text x="150" y="318">entrega.atribuida</text></g>
+      <g class="edge e-work" data-a="rmq" data-b="not">
+        <path d="M462,353 L796,353" marker-end="url(#ah-work)"/>
+        <text x="536" y="347">pagamento.aprovado</text></g>
+
+      <!-- replicação -->
+      <g class="edge e-cdc" data-a="pg1" data-b="dbz">
+        <path d="M489,480 L489,502 L1070,502 L1070,472" marker-end="url(#ah-cdc)"/>
+        <text x="770" y="496">WAL · logical decoding</text></g>
+      <g class="edge e-cdc" data-a="dbz" data-b="kfk">
+        <line x1="1070" y1="430" x2="1070" y2="378" marker-end="url(#ah-cdc)"/></g>
+      <g class="edge e-cdc" data-a="kfk" data-b="rec">
+        <path d="M1070,330 L1070,197 L984,197" marker-end="url(#ah-cdc)"/>
+        <text x="998" y="262">dbserver1.public.*</text></g>
+
+      <!-- observabilidade -->
+      <g class="edge e-obs" data-a="api" data-b="jaeger">
+        <path d="M555,290 L555,522 L757,522 L757,528" marker-end="url(#ah-obs)"/>
+        <text x="563" y="512">OTLP · 5 serviços</text></g>
+      <g class="edge e-obs" data-a="prom" data-b="jaeger">
+        <line x1="828" y1="550" x2="814" y2="550" marker-end="url(#ah-obs)"/></g>
+      <g class="edge e-obs" data-a="grafana" data-b="prom">
+        <line x1="978" y1="550" x2="964" y2="550" marker-end="url(#ah-obs)"/></g>
+
+      <!-- nós: núcleo -->
+      <g class="node n-person" data-id="users" tabindex="0" role="button" aria-label="Usuários">
+        <rect x="430" y="24" width="250" height="46" rx="10"/>
+        <text class="nt" x="555" y="44" text-anchor="middle">Cliente · Lojista · Entregador</text>
+        <text class="ns" x="555" y="59" text-anchor="middle">navegador</text></g>
+      <g class="node n-app" data-id="web" tabindex="0" role="button" aria-label="Frontend Web">
+        <rect x="430" y="90" width="250" height="48" rx="10"/>
+        <text class="nt" x="555" y="111" text-anchor="middle">Frontend Web</text>
+        <text class="ns" x="555" y="126" text-anchor="middle">React 19 · Vite · :5173</text></g>
+      <g class="node n-app" data-id="kong" tabindex="0" role="button" aria-label="API Gateway Kong">
+        <rect x="430" y="158" width="250" height="48" rx="10"/>
+        <text class="nt" x="555" y="179" text-anchor="middle">API Gateway · Kong</text>
+        <text class="ns" x="555" y="194" text-anchor="middle">JWT · rate limit · CORS · :8000</text></g>
+      <g class="node n-app" data-id="api" tabindex="0" role="button" aria-label="Backend Core">
+        <rect x="430" y="226" width="250" height="64" rx="10"/>
+        <text class="nt" x="555" y="250" text-anchor="middle">Backend Core</text>
+        <text class="ns" x="555" y="266" text-anchor="middle">Node · TypeScript · GraphQL</text>
+        <text class="ns" x="555" y="280" text-anchor="middle">Clean Architecture · :4000</text></g>
+      <g class="node n-msg" data-id="rmq" tabindex="0" role="button" aria-label="RabbitMQ">
+        <rect x="290" y="330" width="172" height="54" rx="10"/>
+        <text class="nt" x="376" y="352" text-anchor="middle">RabbitMQ</text>
+        <text class="ns" x="376" y="368" text-anchor="middle">carrega trabalho · DLQ</text></g>
+      <g class="node n-data" data-id="pg1" tabindex="0" role="button" aria-label="Banco principal">
+        <rect x="430" y="430" width="118" height="50" rx="10"/>
+        <text class="nt" x="489" y="451" text-anchor="middle">Principal</text>
+        <text class="ns" x="489" y="466" text-anchor="middle">PostgreSQL 15</text></g>
+      <g class="node n-data" data-id="rds" tabindex="0" role="button" aria-label="Redis">
+        <rect x="562" y="430" width="118" height="50" rx="10"/>
+        <text class="nt" x="621" y="451" text-anchor="middle">Redis</text>
+        <text class="ns" x="621" y="466" text-anchor="middle">GEO + cache</text></g>
+      <g class="node n-ext" data-id="stripe" tabindex="0" role="button" aria-label="Stripe">
+        <rect x="686" y="430" width="104" height="50" rx="10"/>
+        <text class="nt" x="738" y="451" text-anchor="middle">Stripe</text>
+        <text class="ns" x="738" y="466" text-anchor="middle">pagamentos</text></g>
+
+      <!-- nós: logística -->
+      <g class="node n-app" data-id="ent" tabindex="0" role="button" aria-label="MS Entregadores">
+        <rect x="60" y="170" width="210" height="54" rx="10"/>
+        <text class="nt" x="165" y="192" text-anchor="middle">MS Entregadores</text>
+        <text class="ns" x="165" y="208" text-anchor="middle">.NET 10 · gRPC · :5001</text></g>
+      <g class="node n-data" data-id="pg2" tabindex="0" role="button" aria-label="Banco de entregadores">
+        <rect x="60" y="246" width="210" height="44" rx="10"/>
+        <text class="nt" x="165" y="264" text-anchor="middle">Banco Entregadores</text>
+        <text class="ns" x="165" y="279" text-anchor="middle">PostgreSQL 15 · EF Core</text></g>
+      <g class="node n-app" data-id="rot" tabindex="0" role="button" aria-label="MS Roteamento">
+        <rect x="60" y="326" width="210" height="54" rx="10"/>
+        <text class="nt" x="165" y="348" text-anchor="middle">MS Roteamento</text>
+        <text class="ns" x="165" y="364" text-anchor="middle">.NET 10 · gRPC · :5002</text></g>
+      <g class="node n-ext" data-id="osrm" tabindex="0" role="button" aria-label="OSRM">
+        <rect x="60" y="402" width="210" height="44" rx="10"/>
+        <text class="nt" x="165" y="420" text-anchor="middle">OSRM</text>
+        <text class="ns" x="165" y="435" text-anchor="middle">motor de rotas · :5000</text></g>
+
+      <!-- nós: análise -->
+      <g class="node n-app" data-id="rec" tabindex="0" role="button" aria-label="MS Recomendação">
+        <rect x="800" y="170" width="180" height="54" rx="10"/>
+        <text class="nt" x="890" y="192" text-anchor="middle">MS Recomendação</text>
+        <text class="ns" x="890" y="208" text-anchor="middle">Python · read-model · :50053</text></g>
+      <g class="node n-data" data-id="pg3" tabindex="0" role="button" aria-label="Banco analítico">
+        <rect x="800" y="246" width="180" height="44" rx="10"/>
+        <text class="nt" x="890" y="264" text-anchor="middle">Banco Analítico</text>
+        <text class="ns" x="890" y="279" text-anchor="middle">réplica derivada + assinaturas</text></g>
+      <g class="node n-app" data-id="not" tabindex="0" role="button" aria-label="MS Notificações">
+        <rect x="800" y="326" width="180" height="54" rx="10"/>
+        <text class="nt" x="890" y="348" text-anchor="middle">MS Notificações</text>
+        <text class="ns" x="890" y="364" text-anchor="middle">Python · pika</text></g>
+      <g class="node n-ext" data-id="mailtrap" tabindex="0" role="button" aria-label="Mailtrap">
+        <rect x="800" y="402" width="180" height="44" rx="10"/>
+        <text class="nt" x="890" y="420" text-anchor="middle">Mailtrap</text>
+        <text class="ns" x="890" y="435" text-anchor="middle">e-mail transacional</text></g>
+
+      <!-- nós: CDC -->
+      <g class="node n-cdc" data-id="kfk" tabindex="0" role="button" aria-label="Kafka">
+        <rect x="1010" y="330" width="120" height="46" rx="10"/>
+        <text class="nt" x="1070" y="350" text-anchor="middle">Kafka</text>
+        <text class="ns" x="1070" y="365" text-anchor="middle">KRaft</text></g>
+      <g class="node n-cdc" data-id="dbz" tabindex="0" role="button" aria-label="Debezium Connect">
+        <rect x="1010" y="430" width="120" height="46" rx="10"/>
+        <text class="nt" x="1070" y="450" text-anchor="middle">Debezium</text>
+        <text class="ns" x="1070" y="465" text-anchor="middle">Connect 2.4</text></g>
+
+      <!-- nós: observabilidade -->
+      <g class="node n-obs" data-id="jaeger" tabindex="0" role="button" aria-label="Jaeger">
+        <rect x="700" y="530" width="114" height="40" rx="8"/>
+        <text class="nt" x="757" y="555" text-anchor="middle">Jaeger</text></g>
+      <g class="node n-obs" data-id="prom" tabindex="0" role="button" aria-label="Prometheus">
+        <rect x="830" y="530" width="134" height="40" rx="8"/>
+        <text class="nt" x="897" y="555" text-anchor="middle">Prometheus</text></g>
+      <g class="node n-obs" data-id="grafana" tabindex="0" role="button" aria-label="Grafana">
+        <rect x="980" y="530" width="110" height="40" rx="8"/>
+        <text class="nt" x="1035" y="555" text-anchor="middle">Grafana</text></g>
+    </svg>
+
+    <div class="foot">
+      <section>
+        <h3>Por que dois brokers</h3>
+        <p>Não é redundância. O RabbitMQ carrega <em>trabalho</em>: tarefas com consumidor único e DLQ por fila. O Kafka replica <em>estado</em>: o fluxo de mudanças do banco, com replay e ordenação. São problemas diferentes.</p>
+      </section>
+      <section>
+        <h3>O CDC elimina o dual write</h3>
+        <p>O evento é derivado do WAL de uma transação já commitada, não publicado pela aplicação. Não há como o banco gravar e o evento se perder — e escritas fora da API, como o <code>seed</code>, também são replicadas.</p>
+      </section>
+      <section>
+        <h3>Resiliência nas bordas</h3>
+        <p>Toda chamada gRPC tem deadline e retentativa apenas em <code>UNAVAILABLE</code>. O timeout do OSRM é menor que o deadline de quem o chama, para o mais curto ficar mais fundo na pilha.</p>
+      </section>
+      <section>
+        <h3>117 testes, nenhum contêiner</h3>
+        <p>Domínio, casos de uso e adaptadores rodam com dublês das portas; os handlers de CDC usam SQLite em memória. Escrever a suíte revelou dois bugs reais — um <code>instanceof</code> quebrado em 18 classes de erro e um entregador ocupado sendo reportado como offline pelo gRPC.</p>
+      </section>
+    </div>
+  </main>
+</div>
+
+<aside class="drawer" id="drawer" role="complementary" aria-live="polite">
+  <button class="close" id="close" type="button" aria-label="Fechar">×</button>
+  <p class="papel mono" id="d-papel"></p>
+  <h3 id="d-nome"></h3>
+  <p class="stack mono" id="d-stack"></p>
+  <p id="d-desc"></p>
+  <dl id="d-meta"></dl>
+  <p class="note" id="d-note"></p>
+</aside>
+
+<script>
+(function(){
+  var DADOS = {
+    users:{nome:"Cliente, Lojista e Entregador",stack:"navegador · React SPA",desc:"Os três perfis usam a mesma aplicação; o que muda é o painel renderizado. O papel vem da claim role do JWT, e é ela que a diretiva @auth do schema consulta para liberar ou negar cada campo.",papel:"Origem de toda requisição do sistema",meta:{Perfis:"CLIENTE · RESTAURANTE · ENTREGADOR",Telas:"13 componentes React"},note:"O registro é aberto e aceita o perfil desejado, de propósito: é uma demonstração, e sem isso não dá para experimentar os três painéis. Num sistema real, virar lojista exigiria aprovação."},
+
+    web:{nome:"Frontend Web",stack:"React 19 · Vite 8 · Tailwind 3.4 · Apollo Client 4 · Leaflet",desc:"SPA única com a vitrine de restaurantes, o carrinho, o painel do lojista e o app do entregador, incluindo o mapa de rastreamento com o marcador de moto.",papel:"Interface dos três perfis de usuário",meta:{Porta:"5173",Build:"Vite → nginx estático",Mapa:"Leaflet + OpenStreetMap",Sessão:"token em localStorage"},note:"<strong>Risco assumido:</strong> o token fica exposto a XSS. Cookie httpOnly puxaria CORS com credenciais, token anti-CSRF e domínio próprio com TLS — inviável no ambiente de demonstração."},
+
+    kong:{nome:"API Gateway · Kong",stack:"Kong 3.4 · DB-less declarativo",desc:"Porta de entrada única. Valida assinatura e expiração do JWT, aplica CORS, limita a 100 requisições por minuto, injeta o X-Request-Id de correlação e corta corpos acima de 1 MB antes que cheguem ao parser do GraphQL.",papel:"Borda: credencial, limite e correlação",meta:{Porta:"8000",Plugins:"jwt · cors · rate-limiting · correlation-id · request-size-limiting",Config:"kong.template.yml → envsubst no boot"},note:"O gateway <strong>repassa requisições anônimas</strong> de propósito, via consumidor anônimo. Quem decide o que é público é a diretiva @auth do schema — e o Backend Core reverifica o token por conta própria, então segue seguro mesmo exposto direto."},
+
+    api:{nome:"Backend Core",stack:"Node.js · TypeScript · Apollo Server · Prisma 7",desc:"O orquestrador. Expõe um schema GraphQL único sobre 12 módulos de domínio, resolve autorização por diretiva, executa 16 casos de uso isolados e conversa com os quatro microserviços por gRPC.",papel:"Regra de negócio e orquestração",meta:{Porta:"4000",Camadas:"Presentation · Application · Domain · Infrastructure",Schema:"30 queries · 39 mutations",Autorização:"59 campos protegidos, 10 públicos",Resiliência:"deadline + retentativa em todo gRPC",Testes:"71, sem banco nem broker"},note:"A infraestrutura aponta para o domínio, nunca o contrário — e o teste prova: o caso de uso de atribuição é exercitado com dublês de todas as portas, sem Docker. Autorização em duas camadas: a diretiva @auth decide campo a campo, e a modelagem cuida do que ela não vê — as relações aninhadas devolvem uma projeção reduzida do usuário, para que ninguém chegue à PII do cliente pela travessia do grafo."},
+
+    ent:{nome:"MS Entregadores",stack:".NET 10 · gRPC · EF Core · StackExchange.Redis",desc:"Dono do cadastro da frota e da posição geográfica de cada motoboy. Oito operações gRPC cobrem cadastro, status, edição e busca por raio; um stream mantém a localização atualizada. É o único serviço que decide qual entregador recebe um pedido.",papel:"Frota, geolocalização e atribuição",meta:{Porta:"5001",Operações:"8 gRPC + 1 stream",Fila:"entregas.pedido-confirmado",Publica:"entrega.atribuida",Métricas:"porta 9465"},note:"<strong>Bug corrigido por teste:</strong> o mapper convertia o status do banco com <code>Enum.TryParse</code>, mas o protobuf gera <code>EmEntrega</code> a partir de <code>EM_ENTREGA</code> — o parse falhava e um entregador ocupado era reportado como offline. <strong>Dívida em aberto:</strong> a escrita no banco e a publicação do evento seguem em passos separados, sem garantia atômica."},
+
+    rot:{nome:"MS Roteamento",stack:".NET 10 · gRPC · HttpClient",desc:"Converte pares de coordenadas em distância, tempo estimado e geometria de trajeto. Quatro operações: resumo, geometria completa, rota com múltiplas paradas e encaixe na via mais próxima. Não tem banco — todo o estado vem do OSRM a cada chamada.",papel:"Cálculo de rotas e ETA",meta:{Porta:"5002",Operações:"4 gRPC",Estado:"nenhum",Timeout:"6s no HttpClient",Métricas:"porta 9466"},note:"O timeout do OSRM é menor que o deadline de 8s que o Backend Core aplica na chamada gRPC. A ordem importa: o mais curto tem que ficar mais fundo na pilha, senão quem chama desiste antes e o trabalho segue rodando sem ninguém para receber."},
+
+    rec:{nome:"MS Recomendação",stack:"Python 3.12 · FastAPI · gRPC · SQLAlchemy · kafka-python",desc:"Motor de inteligência competitiva de precificação B2B. Compara preços do lojista com concorrentes num raio geográfico e cruza com o histórico real de vendas. É um read-model puro: não recebe trabalho, só replica dados e responde consultas.",papel:"Análise competitiva e insights B2B",meta:{Portas:"gRPC 50053 · HTTP 8001",Consome:"Kafka — nunca RabbitMQ",Réplicas:"5 tabelas derivadas do WAL",Estratégias:"Gratuito nega · Premium analisa",Testes:"22, com SQLite em memória"},note:"O estado <strong>derivado</strong> é descartável e se reconstrói relendo o tópico. O estado <strong>próprio</strong> — as assinaturas comerciais — mora fora do conjunto replicado, senão um rebuild apagaria o plano de todos os lojistas. A idempotência não é só afirmada: há teste que reprocessa o tópico inteiro e verifica que as contagens não mudam."},
+
+    not:{nome:"MS Notificações",stack:"Python 3.12 · pika · urllib",desc:"O serviço mais simples do sistema: consome dois eventos e envia o e-mail correspondente a partir de um template HTML. Sem banco, sem API, sem estado.",papel:"E-mail transacional",meta:{Porta:"nenhuma",Fila:"notificacoes.eventos",Eventos:"pagamento.aprovado · pedido.entregue",Transporte:"API HTTP ou SMTP, autodetectado"},note:"A escolha do transporte é feita em execução: com token da API do Mailtrap usa HTTP REST, senão cai para SMTP. PaaS costuma bloquear portas de saída de SMTP, e o mesmo binário precisa rodar no compose local e na nuvem."},
+
+    rmq:{nome:"RabbitMQ",stack:"RabbitMQ 3 · topic exchange",desc:"Transporta trabalho entre serviços: um pedido confirmado precisa de um entregador, um pagamento aprovado precisa de um e-mail. Três filas de trabalho, cada uma com DLQ dedicada.",papel:"Fila de tarefas entre serviços",meta:{Porta:"5672",Exchange:"delivery-events (topic)",Filas:"3 de trabalho + 3 DLQ",DLX:"delivery-events.dlx"},note:"Ligar todas as DLQ em <code>#</code> faria cada uma receber os descartes de todos os serviços. O <code>x-dead-letter-routing-key</code> por fila é o que as mantém separadas — sem ele, o dead-lettering vira um balde único."},
+
+    dbz:{nome:"Debezium Connect",stack:"Debezium 2.4 · Kafka Connect",desc:"Lê o WAL do banco principal por logical decoding e publica cada alteração no Kafka. Faz um snapshot inicial de todas as linhas e, a partir daí, transmite só as mudanças.",papel:"Captura de mudanças no banco",meta:{Porta:"8083",Publication:"delivery_catalogo_pub",Slot:"delivery_catalogo_slot",Tabelas:"restaurantes · categorias · produtos · pedidos · itens_pedido"},note:"Dois parâmetros custaram tempo. <code>decimal.handling.mode=double</code>, senão NUMERIC chega como base64 e o preço fica ilegível na réplica. E <code>publication.autocreate.mode=all_tables</code>: com <code>filtered</code>, a publication guarda uma <em>lista</em> de tabelas, e o DROP TABLE do reset do banco as removia dela — a task morria em silêncio e o CDC parava a partir da segunda subida. FOR ALL TABLES sobrevive ao DDL; o filtro fino continua no table.include.list."},
+
+    kfk:{nome:"Kafka",stack:"Confluent 7.6 · modo KRaft",desc:"Transporta o fluxo de mudanças do banco principal até a réplica analítica. Sem Zookeeper: broker e controller rodam no mesmo processo, o que corta um contêiner.",papel:"Stream de replicação de estado",meta:{Porta:"9092",Tópicos:"dbserver1.public.*",Retenção:"permite replay desde o snapshot"},note:"O <code>auto_offset_reset=earliest</code> é o que torna a réplica reconstruível: um grupo consumidor novo relê o tópico inteiro desde o snapshot inicial. É por isso que mudar o schema da réplica não pede migration, e sim rebuild."},
+
+    pg1:{nome:"Banco Principal",stack:"PostgreSQL 15 · wal_level=logical",desc:"Fonte da verdade do sistema: usuários, restaurantes, catálogo, pedidos, itens, pagamentos e avaliações. Também é a origem do pipeline de CDC.",papel:"Dados transacionais do núcleo",meta:{Acesso:"Prisma, só pelo Backend Core",Índices:"todas as 12 chaves estrangeiras",Replicação:"logical decoding para o Debezium"},note:"Nenhuma FK tinha índice: toda navegação de relacionamento fazia sequential scan. Em GraphQL isso pesa mais que o normal, porque os resolvers de campo disparam uma consulta por nó do grafo."},
+
+    pg2:{nome:"Banco de Entregadores",stack:"PostgreSQL 15 · EF Core",desc:"Cadastro da frota, fisicamente isolado do banco principal. O Backend Core não tem acesso: para saber qualquer coisa sobre um entregador, ele faz uma chamada gRPC.",papel:"Dados da frota",meta:{Dono:"MS Entregadores",Isolamento:"sem acesso cruzado"},note:"O isolamento físico é o que dá sentido ao microserviço. Compartilhar a instância entre Prisma e EF Core traria acoplamento de schema entre duas stacks que evoluem separadamente."},
+
+    pg3:{nome:"Banco Analítico",stack:"PostgreSQL 15 · SQLAlchemy",desc:"Guarda duas coisas de naturezas diferentes: as réplicas derivadas do CDC e o estado próprio do serviço. A separação entre elas é explícita no código.",papel:"Read-model para os insights",meta:{Derivado:"5 tabelas, reconstruíveis",Próprio:"assinaturas e versão do schema",Idempotência:"item_pedido_id é unique"},note:"As vendas analíticas vêm dos itens de pedido reais, replicados do banco principal. Antes do CDC, este serviço sorteava produtos e quantidades com <code>random</code> para preencher a análise."},
+
+    rds:{nome:"Redis",stack:"Redis 7",desc:"Duas funções distintas: guarda as posições geográficas da frota com comandos GEO, permitindo busca por raio em tempo real, e serve de cache-aside para as leituras pesadas de catálogo e avaliações.",papel:"Geolocalização e cache",meta:{Porta:"6379",GEO:"busca de entregadores por raio",Cache:"restaurantes e avaliações"},note:"O cache-aside vive num decorator que implementa a mesma porta do repositório real. Resolver e caso de uso não sabem que ele existe, e a invalidação fica no ponto por onde toda escrita obrigatoriamente passa."},
+
+    osrm:{nome:"OSRM",stack:"motor C++ · OpenStreetMap",desc:"Resolve caminhos, distâncias e tempos sobre um extrato real do OpenStreetMap da região metropolitana do Rio. Auto-hospedado: o compose sobe o motor com os dados já compilados.",papel:"Motor geográfico",meta:{Porta:"5000",Algoritmo:"MLD (multi-level Dijkstra)",Dados:"extrato do Rio metropolitano"},note:"No nível 1 do C4 aparece como sistema externo, por ser motor de terceiros; no nível 2 é contêiner, porque o projeto o hospeda. As duas leituras estão certas em níveis diferentes."},
+
+    stripe:{nome:"Stripe",stack:"REST API",desc:"Uma das três estratégias de pagamento, ao lado de Pix e cartão. Qual delas roda é decidido em tempo de execução pelo método escolhido no checkout.",papel:"Processamento de pagamento",meta:{Padrão:"Strategy",Alternativas:"Pix · Cartão · Stripe"},note:"A seleção da estratégia ainda é feita com um <code>switch</code> dentro do caso de uso, sobre classes concretas de infraestrutura. É a violação de inversão de dependência mais visível que resta no Backend Core."},
+
+    mailtrap:{nome:"Mailtrap",stack:"REST API ou SMTP",desc:"Caixa de testes que recebe os e-mails transacionais de pagamento aprovado e pedido entregue, sem entregar a caixas reais.",papel:"Sandbox de e-mail",meta:{Transporte:"HTTP REST ou SMTP 2525"}},
+
+    jaeger:{nome:"Jaeger",stack:"All-in-One · OTLP",desc:"Recebe os traces dos cinco serviços e correlaciona, num único fluxo, a requisição GraphQL com as chamadas gRPC, o processamento de fila e as consultas ao banco que ela dispara.",papel:"Tracing distribuído",meta:{Protocolo:"OTLP gRPC 4317",Serviços:"api-node · entregadores · roteamento · recomendação · notificações"},note:"É a peça de observabilidade que <strong>funciona de fato</strong>: as três stacks instrumentam tracing e exportam para cá."},
+
+    prom:{nome:"Prometheus",stack:"Prometheus Server",desc:"Raspa /metrics dos quatro serviços a cada 15 segundos. Além das métricas técnicas da instrumentação automática, coleta os contadores de negócio: pedidos criados, pagamentos por método, entregas atribuídas e mensagens que foram para a DLQ.",papel:"Coleta de métricas",meta:{Porta:"9090",Alvos:"4 serviços",Intervalo:"15s"},note:"Os serviços .NET precisaram de uma porta separada para as métricas. Sem TLS o Kestrel não serve h2c e HTTP/1.1 no mesmo listener, e o Prometheus raspa por HTTP/1.1 — habilitar os dois protocolos juntos quebrava o gRPC com <code>Protocol error</code>."},
+
+    grafana:{nome:"Grafana",stack:"Grafana OSS",desc:"Sobe com datasources e dashboard já provisionados — nada a configurar depois do compose up. O painel tem dez visualizações em três seções: negócio, replicação e saúde técnica.",papel:"Painéis",meta:{Porta:"3000",Fontes:"Prometheus · Jaeger",Dashboard:"Visão Operacional, 10 painéis"},note:"O datasource do Jaeger foi adicionado junto: os diagramas de arquitetura já descreviam a ligação entre Grafana e Jaeger, mas ela não existia no provisionamento."}
+  };
+
+  var svg = document.getElementById('map');
+  var nos = Array.prototype.slice.call(svg.querySelectorAll('.node'));
+  var arestas = Array.prototype.slice.call(svg.querySelectorAll('.edge'));
+  var drawer = document.getElementById('drawer');
+  var selecionado = null;
+
+  function limpar(){
+    nos.concat(arestas).forEach(function(el){ el.classList.remove('dim'); });
+    drawer.classList.remove('open');
+    document.body.classList.remove('com-painel');
+    selecionado = null;
+  }
+
+  function focar(id){
+    var vizinhos = {};
+    vizinhos[id] = true;
+    arestas.forEach(function(e){
+      var a = e.dataset.a, b = e.dataset.b;
+      if (e.classList.contains('hidden')) return;
+      if (a === id) vizinhos[b] = true;
+      if (b === id) vizinhos[a] = true;
+    });
+    nos.forEach(function(n){ n.classList.toggle('dim', !vizinhos[n.dataset.id]); });
+    arestas.forEach(function(e){
+      e.classList.toggle('dim', e.dataset.a !== id && e.dataset.b !== id);
+    });
+
+    var d = DADOS[id];
+    if (!d) return;
+    document.getElementById('d-papel').textContent = d.papel || '';
+    document.getElementById('d-nome').textContent = d.nome;
+    document.getElementById('d-stack').textContent = d.stack;
+    document.getElementById('d-desc').textContent = d.desc;
+
+    var dl = document.getElementById('d-meta');
+    dl.innerHTML = '';
+    Object.keys(d.meta || {}).forEach(function(k){
+      var dt = document.createElement('dt'); dt.textContent = k;
+      var dd = document.createElement('dd'); dd.textContent = d.meta[k];
+      dl.appendChild(dt); dl.appendChild(dd);
+    });
+
+    var nota = document.getElementById('d-note');
+    if (d.note){ nota.innerHTML = d.note; nota.style.display = ''; }
+    else { nota.style.display = 'none'; }
+
+    drawer.classList.add('open');
+    document.body.classList.add('com-painel');
+    selecionado = id;
+  }
+
+  nos.forEach(function(n){
+    function agir(){ selecionado === n.dataset.id ? limpar() : focar(n.dataset.id); }
+    n.addEventListener('click', agir);
+    n.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); agir(); }
+    });
+  });
+
+  document.getElementById('close').addEventListener('click', limpar);
+  document.getElementById('reset').addEventListener('click', limpar);
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') limpar(); });
+
+  document.querySelectorAll('[data-layer]').forEach(function(cx){
+    function aplicar(){
+      arestas.forEach(function(e){
+        if (e.classList.contains('e-' + cx.dataset.layer)) e.classList.toggle('hidden', !cx.checked);
+      });
+      if (selecionado) focar(selecionado);
+    }
+    cx.addEventListener('change', aplicar);
+    aplicar();
+  });
+})();
+</script>
+
+</body>
+</html>

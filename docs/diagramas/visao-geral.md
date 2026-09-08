@@ -4,7 +4,7 @@ Todo o sistema em uma tela. Não é um nível do C4 — é um *system landscape*
 para apresentar o projeto e para servir de mapa antes de entrar nos níveis
 [C1](c1/c4_l1_context.md), [C2](c2/c4_l2_container.md) e [C3](c3/README.md).
 
-> **Versão interativa:** [Planta do Express Delivery](https://claude.ai/code/artifact/6f983440-cba3-46c3-be5b-edfc245d31ac)
+> **Versão interativa:** [Planta do Express Delivery](https://arthurair3s.github.io/express-delivery-system/diagramas/planta.html)
 > — clique numa peça para isolar as dependências dela, filtre por camada
 > (síncrono, trabalho, replicação, observabilidade) e leia a ficha de cada
 > contêiner. É a versão feita para apresentar o projeto.
