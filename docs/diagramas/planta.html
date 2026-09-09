@@ -344,7 +344,7 @@
       <!-- observabilidade -->
       <g class="edge e-obs" data-a="api" data-b="jaeger">
         <path d="M555,290 L555,522 L757,522 L757,528" marker-end="url(#ah-obs)"/>
-        <text x="563" y="512">OTLP · 5 serviços</text></g>
+        <text x="563" y="512">OTLP · 4 serviços</text></g>
       <g class="edge e-obs" data-a="prom" data-b="jaeger">
         <line x1="828" y1="550" x2="814" y2="550" marker-end="url(#ah-obs)"/></g>
       <g class="edge e-obs" data-a="grafana" data-b="prom">
@@ -513,7 +513,7 @@
 
     mailtrap:{nome:"Mailtrap",stack:"REST API ou SMTP",desc:"Caixa de testes que recebe os e-mails transacionais de pagamento aprovado e pedido entregue, sem entregar a caixas reais.",papel:"Sandbox de e-mail",meta:{Transporte:"HTTP REST ou SMTP 2525"}},
 
-    jaeger:{nome:"Jaeger",stack:"All-in-One · OTLP",desc:"Recebe os traces dos cinco serviços e correlaciona, num único fluxo, a requisição GraphQL com as chamadas gRPC, o processamento de fila e as consultas ao banco que ela dispara.",papel:"Tracing distribuído",meta:{Protocolo:"OTLP gRPC 4317",Serviços:"api-node · entregadores · roteamento · recomendação · notificações"},note:"É a peça de observabilidade que <strong>funciona de fato</strong>: as três stacks instrumentam tracing e exportam para cá."},
+    jaeger:{nome:"Jaeger",stack:"All-in-One · OTLP",desc:"Recebe os traces dos quatro serviços instrumentados e correlaciona, num único fluxo, a requisição GraphQL com as chamadas gRPC, o processamento de fila e as consultas ao banco que ela dispara.",papel:"Tracing distribuído",meta:{Protocolo:"OTLP gRPC 4317",Serviços:"api-node · entregadores · roteamento · recomendação"},note:"As três stacks — Node, .NET e Python — instrumentam tracing e exportam para cá. O <code>ms-notificacoes</code> fica de fora: é o único serviço sem instrumentação, por ser só um consumidor de fila, sem servidor HTTP."},
 
     prom:{nome:"Prometheus",stack:"Prometheus Server",desc:"Raspa /metrics dos quatro serviços a cada 15 segundos. Além das métricas técnicas da instrumentação automática, coleta os contadores de negócio: pedidos criados, pagamentos por método, entregas atribuídas e mensagens que foram para a DLQ.",papel:"Coleta de métricas",meta:{Porta:"9090",Alvos:"4 serviços",Intervalo:"15s"},note:"Os serviços .NET precisaram de uma porta separada para as métricas. Sem TLS o Kestrel não serve h2c e HTTP/1.1 no mesmo listener, e o Prometheus raspa por HTTP/1.1 — habilitar os dois protocolos juntos quebrava o gRPC com <code>Protocol error</code>."},
 

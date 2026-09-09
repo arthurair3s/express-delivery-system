@@ -6,124 +6,59 @@ Este projeto é um ecossistema de alta performance projetado para demonstrar a a
 
 ## 🗺️ A arquitetura em uma tela
 
-Antes de descer nos níveis do C4, o mapa completo:
-**[Visão Geral da Arquitetura](docs/diagramas/visao-geral.md)** — todos os
-contêineres, os dois brokers e o pipeline de CDC num diagrama só.
+O sistema tem 20 contêineres, 5 linguagens e dois brokers com papéis distintos.
+Três formas de olhar para ele, da mais rápida para a mais detalhada:
 
-Existe também uma **[versão interativa](https://arthurair3s.github.io/express-delivery-system/diagramas/planta.html)**:
-clique numa peça para isolar as dependências dela, filtre por camada e leia a
-ficha técnica de cada contêiner. É a versão para apresentar o projeto.
+| Visão | Para quê |
+| :--- | :--- |
+| **[Planta interativa](https://arthurair3s.github.io/express-delivery-system/diagramas/planta.html)** | Clique numa peça para isolar as dependências dela, filtre por camada e leia a ficha de cada contêiner. É a versão para apresentar o projeto. |
+| **[Visão geral](docs/diagramas/visao-geral.md)** | Todos os contêineres num diagrama, mais o de observabilidade em separado. |
+| **[C4 — níveis 1, 2 e 3](docs/diagramas/)** | O detalhamento formal: [contexto](docs/diagramas/c1/c4_l1_context.md), [contêineres](docs/diagramas/c2/c4_l2_container.md) e [componentes por contêiner](docs/diagramas/c3/README.md). |
 
----
+### O caminho de um pedido
 
-## 🏛️ Arquitetura do Sistema (Modelo C4)
-
-Utilizamos o Modelo C4 para descrever a estrutura do sistema, dividindo-a em três níveis de detalhamento (Contexto, Contêineres e Componentes) de forma limpa e integrada.
-
-### Nível 1: Contexto do Sistema (System Context)
-Apresenta a visão panorâmica de alto nível e como o ecossistema Express Delivery interage com seus diferentes usuários e integrações de terceiros.
+O recorte mais útil para entender o sistema: o que acontece entre tocar em
+"finalizar pedido" e a moto sair para a entrega.
 
 ```mermaid
-graph TD
-    %% Styling
-    classDef person fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff;
-    classDef system fill:#1168bd,stroke:#0e5aab,stroke-width:2px,color:#fff;
-    classDef ext fill:#999999,stroke:#777777,stroke-width:2px,color:#fff;
+graph LR
+    classDef pessoa fill:#08427b,stroke:#052e56,color:#fff;
+    classDef app fill:#438dd5,stroke:#3b7bb5,color:#fff;
+    classDef dado fill:#0b132b,stroke:#00b4d8,color:#fff;
+    classDef fila fill:#8a5a2b,stroke:#f8961e,color:#fff;
+    classDef ext fill:#999,stroke:#777,color:#fff;
 
-    %% Elements
-    cliente["Cliente<br>(Visualiza cardápios, faz pedidos e acompanha entregas em tempo real via Web)"]:::person
-    entregador["Entregador<br>(Gerencia disponibilidade, aceita corridas e atualiza localização via painel web dedicado)"]:::person
-    lojista["Lojista (Restaurante)<br>(Gerencia cardápios e acompanha insights competitivos da loja via painel web)"]:::person
+    C["👤 Cliente"]:::pessoa
+    WEB["Frontend Web<br>React"]:::app
+    KONG["Kong<br>JWT · rate limit"]:::app
+    API["Backend Core<br>Node · GraphQL · Clean Arch"]:::app
+    PG[("PostgreSQL<br>principal")]:::dado
+    RMQ["RabbitMQ"]:::fila
+    ENT["MS Entregadores<br>.NET · gRPC"]:::app
+    ROT["MS Roteamento<br>.NET · gRPC"]:::app
+    OSRM["OSRM"]:::ext
+    NOT["MS Notificações<br>Python"]:::app
+    KFK["Debezium → Kafka"]:::fila
+    REC["MS Recomendação<br>read-model"]:::app
 
-    express_delivery["Sistema Express Delivery<br>(Plataforma Central de Delivery e Roteamento Logístico)"]:::system
-    externos["Integrações Externas<br>(OSRM, Stripe, Mailtrap HTTP/SMTP)"]:::ext
-
-    cliente -->|Interagem via Web/App/APIs| express_delivery
-    entregador -->|Gerenciam disponibilidade e entregas| express_delivery
-    lojista -->|Gerenciam lojas e visualizam insights| express_delivery
-    express_delivery -->|Consome serviços de mapas, pagamento e e-mail| externos
+    C --> WEB -->|GraphQL| KONG --> API
+    API --> PG
+    API -->|pedido.confirmado| RMQ
+    RMQ --> ENT
+    ENT -->|melhor ETA| ROT --> OSRM
+    ENT -->|entrega.atribuida| RMQ
+    RMQ -->|pagamento.aprovado| NOT
+    PG -.->|WAL| KFK -.->|CDC| REC
 ```
-> 🔗 [Nível 1 detalhado, com legenda e fronteira do sistema](docs/diagramas/c1/c4_l1_context.md)
 
-### Nível 2: Contêineres (Containers)
-Aumenta o detalhamento expondo a topologia de microsserviços, bancos de dados, cache, brokers de mensagens e telemetria que compõem o ecossistema.
+O caminho **síncrono** é a linha de cima: navegador → Kong → Backend Core →
+microserviços por gRPC, com deadline e retentativa em cada chamada. O
+**assíncrono** é o resto: o pedido confirmado vira evento, o MS de Entregadores
+escolhe o motoboy e devolve `entrega.atribuida`; em paralelo, o Debezium lê o WAL
+e alimenta a réplica analítica.
 
-```mermaid
-graph TD
-    %% Styling
-    classDef client fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff;
-    classDef container fill:#438dd5,stroke:#3b7bb5,stroke-width:2px,color:#fff;
-    classDef db fill:#0b132b,stroke:#00b4d8,stroke-width:2px,color:#fff;
-    classDef broker fill:#2d1a12,stroke:#f8961e,stroke-width:2px,color:#fff;
-    classDef ext fill:#121212,stroke:#666,stroke-width:1px,color:#aaa;
-
-    cliente["Usuários (Clientes, Lojistas, Entregadores)"]:::client
-    gateway["API Gateway (Kong:8000)"]:::container
-    frontend["Frontend Web (React SPA)"]:::container
-
-    subgraph "Backend Core & Microserviços"
-        api_node["Backend Core (API Node:4000)"]:::container
-        ms_dotnet["MS Core .NET (Entregadores / Roteamento)"]:::container
-        ms_python["MS Apoio Python (Recomendação / Notificações)"]:::container
-    end
-
-    subgraph "Persistência e Mensageria"
-        databases[("Bancos de Dados & Cache<br>(PostgreSQL / Redis)")]:::db
-        messaging[("Mensageria<br>(RabbitMQ: trabalho · Kafka+Debezium: replicação)")]:::db
-    end
-
-    ext["Integrações Externas (OSRM, Stripe, Mailtrap HTTP/SMTP)"]:::ext
-
-    %% Flows
-    cliente -->|Acessa / Interage| frontend
-    cliente -->|Requisições HTTP/gRPC| gateway
-    gateway -->|Roteia requisições| frontend
-    gateway -->|Roteia /graphql| api_node
-
-    api_node -->|Comunicação gRPC| ms_dotnet
-    api_node -->|Comunicação gRPC| ms_python
-    api_node -->|Leitura/Escrita SQL e Cache| databases
-    api_node -->|Emite eventos / Integrações| messaging
-    api_node -->|Transações financeiras| ext
-
-    ms_dotnet -->|Persiste dados e rotas| databases
-    ms_dotnet -->|Consome/Publica eventos| messaging
-    ms_dotnet -->|Cálculo geográfico| ext
-
-    ms_python -->|Réplica analítica B2B| databases
-    ms_python -->|Consome CDC do catálogo e das vendas| messaging
-    ms_python -->|"Envio de e-mails (HTTP REST / SMTP)"| ext
-```
-> 🔗 [Nível 2 detalhado, com portas internas e os dois brokers](docs/diagramas/c2/c4_l2_container.md)
-
-### Nível 3: Componentes (Components)
-Zoom sobre a organização do container **Backend Core (API Node)**, estruturada sob as premissas da Clean Architecture com injeção e inversão de dependência (DIP).
-
-```mermaid
-graph TB
-    %% Styling
-    classDef comp fill:#85bbf0,stroke:#6699cc,stroke-width:2px,color:#000;
-    classDef ext fill:#999999,stroke:#777777,stroke-width:2px,color:#fff;
-
-    gateway["API Gateway (Kong)"]:::ext
-
-    subgraph "Backend Core (API Node)"
-        pres["Camada de Apresentação (GraphQL Resolvers)"]:::comp
-        app["Camada de Aplicação (Use Cases & Schemas)"]:::comp
-        dom["Camada de Domínio (Entidades, VOs & Portas)"]:::comp
-        infra["Camada de Infraestrutura (Prisma, gRPC & RabbitMQ)"]:::comp
-    end
-
-    resources["Bancos, Filas e Microserviços"]:::ext
-
-    gateway -->|Chamadas GraphQL| pres
-    pres -->|Invoca| app
-    app -->|Contratos de Negócio| dom
-    infra -.->|Implementa Portas| dom
-    app -->|Orquestração de Dados| infra
-    infra -->|Efetua persistência / chamadas RPC| resources
-```
-> 🔗 [Nível 3: um diagrama de componentes por contêiner](docs/diagramas/c3/README.md)
+A separação dos brokers é proposital: **RabbitMQ carrega trabalho, Kafka replica
+estado.**
 
 ---
 
@@ -190,28 +125,109 @@ docker compose up --build
 
 ---
 
-## 🌟 Funcionalidades e Padrões de Projeto Implementados
+## 🌟 O que o sistema faz
 
-Com base nas últimas evoluções de arquitetura descritas no histórico do projeto, as seguintes capacidades estão ativas e funcionais:
+Uma SPA única atende os três perfis; o painel renderizado vem da claim `role` do
+JWT.
 
-*   **Arquitetura baseada em Casos de Uso (Clean Architecture & DIP)**: Divisão estruturada em Presentation (GraphQL Resolvers), Application (Use Cases atômicos e isolados), Domain (Entities, Value Objects & Ports) e Infrastructure, com total inversão de dependências.
-*   **Isolamento Completo de Bancos de Dados**: Bancos de dados PostgreSQL dedicados para o núcleo principal (`postgres_db`), entregadores (`postgres_entregadores`) e recomendações B2B (`postgres_recomendacao`), reduzindo drasticamente o acoplamento físico.
-*   **Cancelamento Dinâmico de Simulação / Override de Localização**: O mecanismo de simulação autônoma de GPS é cancelado imediatamente quando o entregador atualiza sua geolocalização manualmente no painel, garantindo que o backend respeite o ponto selecionado pelo usuário sem concorrência de threads/timeouts.
-*   **Envio Resiliente de E-mails via HTTP REST**: O microserviço de notificações autodetecta a presença da credencial de token do Mailtrap para alternar o envio de emails do protocolo SMTP tradicional para a API REST HTTP, contornando bloqueios de portas de e-mail típicos em ambientes de produção na nuvem (como no Railway).
-*   **Projeção mínima nas relações do grafo**: a diretiva `@auth` protege campo a campo, mas não enxerga a travessia. Um lojista legítimo, indo por `pedidosPorRestaurante → usuario`, alcançava e-mail, telefone, coordenadas de casa do cliente e — por `Usuario.pedidos` — o histórico dele nos restaurantes concorrentes. As relações aninhadas passaram a devolver um `UsuarioPublico` com apenas `id`, `nome` e `endereco`; a conta completa só é acessível pelo próprio dono, via `me`. Há teste de regressão fixando essa forma.
-*   **Autorização declarativa no schema GraphQL**: uma diretiva `@auth(roles: [...])` aplicada por transformação de schema embrulha o resolver de cada campo protegido. O que é público — catálogo, login, registro — é público por ausência explícita da diretiva, legível direto no SDL. Argumentos de identidade (`usuario_id`, `entregador_id`) foram **removidos do contrato**: o dono de cada recurso vem do token, então forjar identidade deixou de ser expressável.
-*   **Mensageria Assíncrona com RabbitMQ**: Atribuição de entregadores guiada por eventos (`pedido.confirmado` e `entrega.atribuida`). As cinco filas têm **DLQ dedicada**, isolada por `x-dead-letter-routing-key` em uma DLX compartilhada — uma mensagem que falha fica retida para inspeção em vez de ser descartada.
-*   **Change Data Capture com Kafka + Debezium**: a réplica analítica do `ms-recomendacao` é derivada do WAL do PostgreSQL, não publicada pela aplicação. Isso elimina o *dual write* — o evento nasce de uma transação já commitada — e captura **toda** escrita, inclusive seed e SQL manual, que nunca passariam pelos resolvers. O Kafka roda em **modo KRaft**, sem Zookeeper, e o connector é registrado automaticamente no boot.
-*   **Divisão explícita entre os dois brokers**: *Kafka replica estado, RabbitMQ carrega trabalho*. Replicação de catálogo e vendas é fluxo de dados com replay e ordenação — caso do Kafka. `pedido.confirmado → atribuir entregador` é tarefa com consumidor único e DLQ — caso do RabbitMQ.
-*   **Read-model reconstruível**: tudo no banco de recomendação pode ser refeito relendo o tópico desde o snapshot. Por isso uma mudança de schema ali não pede migration, pede *rebuild* — o `replica.py` versiona o schema e, ao detectar divergência, recria as tabelas derivadas e faz o consumidor reler o tópico. O estado **próprio** do serviço (assinaturas comerciais) mora fora do conjunto replicado, justamente para sobreviver a isso.
-*   **Idempotência no consumo**: o Debezium entrega *at-least-once*, então reprocessar é normal, não excepcional. Os handlers aplicam estado completo (`after`) em vez de deltas, e `vendas_produtos_analise.item_pedido_id` é `unique` — a chave natural da origem. Verificado resetando os offsets e reprocessando o tópico inteiro: contagens idênticas.
-*   **Resiliência nas chamadas de saída**: todo cliente gRPC aplica *deadline* por chamada (5s, 8s para roteamento) via proxy que distingue métodos unários de streams long-lived pelos metadados do `grpc-js`, mais retentativa automática com backoff exponencial apenas em `UNAVAILABLE`. O `HttpClient` do OSRM tem timeout explícito de 6s, abaixo do deadline de quem o chama.
-*   **Cache como decorator de repositório**: o cache-aside do Redis vive em um `CachedRestauranteRepository` que implementa a mesma porta do repositório real e é composto no container de DI. Resolvers e casos de uso não sabem que existe cache; a invalidação acontece no ponto por onde toda escrita passa.
-*   **Strategy Pattern para Regras de Negócio**: Utilizado para alternar dinamicamente métodos de pagamento (Pix, Cartão de Crédito com limite, Stripe) e níveis de planos de recomendação (Gratuito vs Premium).
-*   **Cache Distribuído Híbrido**: Redis operando como cache-aside de queries de alta leitura (como restaurantes e avaliações) e invalidação imediata em mutations para alta performance com consistência imediata.
-*   **Suíte de testes sem infraestrutura**: 108 testes cobrindo Value Objects, máquinas de estado, casos de uso com portas dubladas, o decorator de cache, a diretiva de autorização, os handlers de CDC e o mapeamento gRPC. Nenhum precisa de Docker, banco ou broker — é isso que a inversão de dependência compra. `./run-tests.sh` roda as quatro suítes.
-*   **Métricas de negócio, não só técnicas**: além de latência e volume vindos da instrumentação automática, contadores que respondem perguntas operacionais — pedidos criados, pagamentos por método e resultado, entregas atribuídas, mensagens descartadas para a DLQ e eventos de CDC aplicados por tabela. Um pico de erro aparece na latência; "nenhum pedido está sendo atribuído há dez minutos" só aparece com isso.
-*   **Monitoramento e Rastreamento Distribuído**: Rastreamento de latência e traces de ponta a ponta correlacionando requisições GraphQL com chamadas gRPC, processamento de filas e banco de dados, exportando para o Jaeger.
+**Cliente**
+*   Vitrine de restaurantes, cardápio e carrinho, com endereço editável.
+*   Checkout com três métodos de pagamento (Pix, cartão com limite e Stripe),
+    selecionados em tempo de execução por *Strategy*.
+*   Rastreamento da entrega em tempo real, com a moto se movendo no mapa.
+*   Histórico dos próprios pedidos.
+
+**Lojista**
+*   Painel de pedidos: aceitar ou recusar o que chega, e acompanhar o preparo.
+*   Gestão de cardápio: categorias e produtos.
+*   **Insights B2B de precificação**: comparação com concorrentes num raio
+    geográfico, cruzada com o histórico real de vendas.
+*   Assinatura comercial: o plano (Gratuito ou Premium) decide o que a análise
+    devolve.
+
+**Entregador**
+*   Ficar online/offline, o que liga e desliga o radar de ofertas.
+*   Radar de corridas próximas, por raio geográfico sobre o Redis GEO.
+*   Aceitar corrida e ver o trajeto calculado pelo OSRM.
+*   Simular o deslocamento de forma autônoma pelo GPS **ou** assumir o controle
+    manualmente — arrastando o marcador ou usando presets. O override cancela a
+    simulação autônoma em curso, para o backend respeitar a posição escolhida.
+
+---
+
+## 🏗️ Como foi construído
+
+### Arquitetura e organização
+*   **Clean Architecture com inversão de dependência**: Presentation (resolvers
+    GraphQL), Application (casos de uso atômicos), Domain (entidades, Value
+    Objects e portas) e Infrastructure. A infraestrutura aponta para o domínio,
+    nunca o contrário — e a suíte de testes prova isso, exercitando casos de uso
+    com dublês de todas as portas, sem Docker.
+*   **Isolamento físico de bancos**: PostgreSQL dedicado para o núcleo, para
+    entregadores e para o read-model analítico. Nenhum serviço lê o banco do
+    outro; para saber algo sobre a frota, o Backend Core faz gRPC.
+*   **Strategy para regras que variam**: métodos de pagamento e níveis de plano
+    comercial.
+*   **Cache como decorator de repositório**: o cache-aside do Redis vive num
+    `CachedRestauranteRepository` que implementa a mesma porta do repositório
+    real e é composto no container de DI. Resolvers e casos de uso não sabem que
+    existe cache, e a invalidação fica no ponto por onde toda escrita passa.
+
+### Segurança
+*   **Autorização declarativa no schema**: uma diretiva `@auth(roles: [...])`,
+    aplicada por transformação de schema, embrulha o resolver de cada campo
+    protegido. O que é público — catálogo, login, registro — é público por
+    ausência explícita da diretiva, legível direto no SDL. Argumentos de
+    identidade (`usuario_id`, `entregador_id`) foram **removidos do contrato**:
+    o dono de cada recurso vem do token, então forjar identidade deixou de ser
+    expressável.
+*   **Projeção mínima nas relações do grafo**: autorização por campo não enxerga
+    a travessia. Um lojista legítimo, indo por `pedidosPorRestaurante → usuario`,
+    alcançava e-mail, telefone e coordenadas de casa do cliente — e, por
+    `Usuario.pedidos`, o histórico dele na concorrência. As relações aninhadas
+    passaram a devolver um `UsuarioPublico` com apenas `id`, `nome` e `endereco`;
+    a conta completa só é acessível pelo próprio dono, via `me`.
+
+### Comunicação assíncrona
+*   **RabbitMQ carrega trabalho**: atribuição de entregas e notificações, guiadas
+    por `pedido.confirmado`, `entrega.atribuida`, `pagamento.aprovado` e
+    `pedido.entregue`. Cada fila tem **DLQ dedicada**, isolada por
+    `x-dead-letter-routing-key` numa DLX compartilhada — uma mensagem que falha
+    fica retida para inspeção em vez de ser descartada.
+*   **Kafka replica estado, via CDC**: a réplica analítica do `ms-recomendacao` é
+    derivada do WAL do PostgreSQL pelo Debezium, não publicada pela aplicação.
+    Isso elimina o *dual write* — o evento nasce de uma transação já commitada —
+    e captura **toda** escrita, inclusive seed e SQL manual, que nunca passariam
+    pelos resolvers. O Kafka roda em modo **KRaft**, sem Zookeeper.
+*   **Read-model reconstruível**: tudo no banco de recomendação pode ser refeito
+    relendo o tópico desde o snapshot. Por isso uma mudança de schema ali não
+    pede migration, pede *rebuild*. O estado **próprio** do serviço (assinaturas
+    comerciais) mora fora do conjunto replicado, justamente para sobreviver a
+    isso.
+*   **Idempotência no consumo**: o Debezium entrega *at-least-once*, então
+    reprocessar é normal, não excepcional. Os handlers aplicam estado completo
+    (`after`) em vez de deltas, e `vendas_produtos_analise.item_pedido_id` é
+    `unique` — a chave natural da origem. Verificado resetando os offsets e
+    reprocessando o tópico inteiro: contagens idênticas.
+
+### Resiliência
+*   **Deadline e retentativa em toda chamada de saída**: cada cliente gRPC aplica
+    deadline por chamada (5s, 8s para roteamento) através de um proxy que
+    distingue métodos unários de streams pelos metadados do `grpc-js`, mais
+    retentativa com backoff exponencial apenas em `UNAVAILABLE`. O `HttpClient`
+    do OSRM tem timeout de 6s, **abaixo** do deadline de quem o chama — o mais
+    curto precisa ficar mais fundo na pilha.
+
+### Observabilidade
+*   **Tracing distribuído**: OpenTelemetry nas três stacks, exportando para o
+    Jaeger. Um trace correlaciona a requisição GraphQL com as chamadas gRPC, o
+    processamento de fila e as consultas ao banco que ela dispara.
+*   **Métricas de negócio, não só técnicas**: além de latência e volume vindos da
+    instrumentação automática, contadores que respondem perguntas operacionais —
+    pedidos criados, pagamentos por método e resultado, entregas atribuídas,
+    mensagens descartadas para a DLQ e eventos de CDC aplicados por tabela. Um
+    pico de erro aparece na latência; "nenhum pedido está sendo atribuído há dez
+    minutos" só aparece com isso.
 
 ---
 
@@ -260,33 +276,36 @@ depende mais de um POST manual na API do Kafka Connect.
 ./run-tests.sh
 ```
 
-| Suíte | Ferramenta | Cobre |
-| :--- | :--- | :--- |
-| `api-node/tests` | Vitest | Value Objects, máquinas de estado, `AtribuirMelhorEntregadorUseCase`, decorator de cache, diretiva `@auth` |
-| `ms-tests-cs` | xUnit + NSubstitute | Mapeamento entidade ↔ contrato gRPC, lógica de roteamento |
-| `ms-recomendacao-py/tests` | pytest | Handlers de CDC, idempotência e replay, resolução de plano |
-| `ms-notificacoes-py/tests` | pytest | Renderização dos e-mails transacionais |
+**117 testes**, nenhum deles precisa de Docker, banco ou broker:
+
+| Suíte | Testes | Ferramenta | Cobre |
+| :--- | ---: | :--- | :--- |
+| `api-node/tests` | 71 | Vitest | Value Objects, máquinas de estado, `AtribuirMelhorEntregadorUseCase`, decorator de cache, diretiva `@auth` |
+| `ms-tests-cs` | 18 | xUnit + NSubstitute | Mapeamento entidade ↔ contrato gRPC, lógica de roteamento |
+| `ms-recomendacao-py/tests` | 22 | pytest | Handlers de CDC, idempotência e replay, resolução de plano |
+| `ms-notificacoes-py/tests` | 6 | pytest | Renderização dos e-mails transacionais |
 
 Nenhuma suíte sobe contêiner: os testes de CDC usam SQLite em memória e os de
 caso de uso usam dublês das portas. A suíte inteira roda em segundos, que é a
 condição para alguém de fato executá-la.
 
-**Três achados de segurança e correção, todos com teste de regressão:**
+**Escrever a suíte revelou três problemas reais**, todos hoje com teste de
+regressão. Um de exposição de dados:
 
-0. O grafo GraphQL expunha mais que qualquer tela consumia. Autorização por campo
+1. O grafo GraphQL expunha mais que qualquer tela consumia. Autorização por campo
    não bloqueia travessia: bastava partir de um campo liberado para chegar à PII
    do cliente e ao histórico dele na concorrência. Resolvido com um tipo de
    projeção nas relações, sem tocar no frontend — ele já pedia só `nome` e
    `endereco`.
 
-**E dois bugs de implementação:**
+E dois bugs de implementação:
 
-1. `DomainError` fixava `DomainError.prototype` no construtor, o que descartava o
+2. `DomainError` fixava `DomainError.prototype` no construtor, o que descartava o
    protótipo de toda subclasse. `erro instanceof PedidoInvalidoError` devolvia
    `false` nas 18 subclasses do sistema — e era por isso que o tratamento de erro
    do GraphQL comparava sufixo de nome em vez de usar `instanceof`.
 
-2. O mapper do MS de Entregadores usava `Enum.TryParse` para converter o status
+3. O mapper do MS de Entregadores usava `Enum.TryParse` para converter o status
    do banco no enum do contrato gRPC. Como o gerador de protobuf transforma
    `EM_ENTREGA` em `EmEntrega`, o parse falhava e caía no fallback: **um
    entregador ocupado era reportado como offline**.
