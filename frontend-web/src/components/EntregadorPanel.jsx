@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { Marker } from 'react-leaflet';
+import MapaBase, { AjustarVista } from '../mapa/MapaBase';
+import { ICONES } from '../mapa/leaflet';
 import {
   GET_ENTREGAS_PENDENTES,
   GET_ENTREGADOR_ENTREGAS,
@@ -25,28 +25,6 @@ const authFetch = (query, variables = {}) => {
   }).then(r => r.json());
 };
 
-// Correção de ícone padrão do Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-const driverIcon = L.icon({
-  iconUrl: '/icons/entregador-icon.png',
-  iconSize: [40, 40],
-  iconAnchor: [20, 20],
-});
-
-function RecenterMap({ position }) {
-  const map = useMap();
-  useEffect(() => {
-    if (position) map.setView(position, 14);
-  }, [position, map]);
-  return null;
-}
-
 function DraggableMarker({ position, setPosition }) {
   const markerRef = useRef(null);
   const eventHandlers = useMemo(
@@ -67,7 +45,7 @@ function DraggableMarker({ position, setPosition }) {
       draggable={true}
       eventHandlers={eventHandlers}
       position={position}
-      icon={driverIcon}
+      icon={ICONES.entregador}
       ref={markerRef}
     />
   );
@@ -377,12 +355,11 @@ export default function EntregadorPanel({ usuario }) {
                 
                 {/* Mini mapa da posição atual do entregador */}
                 {coords && (
-                  <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-inner" style={{ height: '200px' }}>
-                    <MapContainer center={coords} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-                      <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-                      <Marker position={coords} icon={driverIcon} />
-                      <RecenterMap position={coords} />
-                    </MapContainer>
+                  <div className="border border-gray-100 shadow-inner rounded-2xl overflow-hidden">
+                    <MapaBase expansivel altura="h-[200px]" center={coords} zoom={14}>
+                      <Marker position={coords} icon={ICONES.entregador} />
+                      <AjustarVista centro={coords} zoom={14} />
+                    </MapaBase>
                   </div>
                 )}
 
@@ -517,21 +494,15 @@ export default function EntregadorPanel({ usuario }) {
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Ajuste Fino no Mapa:</label>
               <div className="h-56 w-full rounded-2xl border border-slate-100 overflow-hidden relative shadow-inner">
-                <MapContainer 
-                  center={coords} 
-                  zoom={14} 
-                  style={{ height: '100%', width: '100%' }}
-                  zoomControl={false}
-                >
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                  <DraggableMarker 
-                    position={coords} 
-                    setPosition={(newPos) => handleUpdateLocation(newPos[0], newPos[1])} 
+                <MapaBase center={coords} zoom={14} altura="h-full" moldura="">
+                  <DraggableMarker
+                    position={coords}
+                    setPosition={(newPos) => handleUpdateLocation(newPos[0], newPos[1])}
                   />
-                  <RecenterMap position={coords} />
-                </MapContainer>
+                  <AjustarVista centro={coords} zoom={14} />
+                </MapaBase>
                 <div className="absolute bottom-2.5 left-2.5 z-[1000] bg-slate-900/90 text-white text-[9px] font-semibold py-1 px-2.5 rounded-full shadow backdrop-blur-sm pointer-events-none">
-                  Drag 📍 to update position
+                  Arraste o 📍 para ajustar a posição
                 </div>
               </div>
             </div>

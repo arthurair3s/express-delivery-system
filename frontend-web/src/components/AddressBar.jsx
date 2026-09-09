@@ -1,32 +1,10 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { MapPin, Search, Navigation, Check, X, Loader2, Edit2 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { Marker } from 'react-leaflet';
+import MapaBase, { AjustarVista } from '../mapa/MapaBase';
+import { ICONES } from '../mapa/leaflet';
 import { ATUALIZAR_ENDERECO } from '../graphql/queries';
 import { API_URL } from '../config';
-
-// Correção de ícones padrão do leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-const clienteIcon = L.icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-  iconSize: [35, 35],
-  iconAnchor: [17, 35],
-});
-
-function RecenterMap({ position }) {
-  const map = useMap();
-  useEffect(() => {
-    if (position) map.setView(position, 16);
-  }, [position, map]);
-  return null;
-}
 
 function DraggableMarker({ position, setPosition, onDragEnd }) {
   const markerRef = useRef(null);
@@ -52,7 +30,7 @@ function DraggableMarker({ position, setPosition, onDragEnd }) {
       draggable={true}
       eventHandlers={eventHandlers}
       position={position}
-      icon={clienteIcon}
+      icon={ICONES.cliente}
       ref={markerRef}
     />
   );
@@ -304,20 +282,14 @@ export default function AddressBar({ usuario, setUsuario }) {
 
             {/* Mapa Leaflet */}
             <div className="h-72 w-full rounded-2xl border border-slate-200/80 overflow-hidden relative shadow-inner">
-              <MapContainer 
-                center={tempCoords} 
-                zoom={16} 
-                style={{ height: '100%', width: '100%' }} 
-                zoomControl={true}
-              >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <DraggableMarker 
-                  position={tempCoords} 
-                  setPosition={setTempCoords} 
-                  onDragEnd={handleMarkerDragEnd} 
+              <MapaBase center={tempCoords} zoom={16} altura="h-full" moldura="">
+                <DraggableMarker
+                  position={tempCoords}
+                  setPosition={setTempCoords}
+                  onDragEnd={handleMarkerDragEnd}
                 />
-                <RecenterMap position={tempCoords} />
-              </MapContainer>
+                <AjustarVista centro={tempCoords} zoom={16} />
+              </MapaBase>
               <div className="absolute bottom-3 left-3 z-[1000] bg-slate-900/90 text-white text-[10px] font-bold py-1.5 px-3 rounded-full shadow backdrop-blur-sm pointer-events-none">
                 📍 Arraste o pin no mapa para refinar a entrega
               </div>
