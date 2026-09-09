@@ -110,7 +110,7 @@ function App() {
       return (
         <RegisterPage 
           onBackToLogin={() => setView('login')} 
-          onRegisterSuccess={(email) => {
+          onRegisterSuccess={() => {
             setView('login');
           }}
         />

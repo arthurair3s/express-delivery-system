@@ -101,7 +101,7 @@ export default function AddressBar({ usuario, setUsuario }) {
       const result = await geocodeAddress(enderecoInput);
       setTempCoords([result.lat, result.lon]);
       setEnderecoInput(result.display_name);
-    } catch (err) {
+    } catch {
       alert("Não foi possível encontrar o endereço informado. Tente digitar de forma mais simples (ex: Rua Augusta, 100 - São Paulo).");
     } finally {
       setGeocodingLoading(false);
@@ -125,7 +125,7 @@ export default function AddressBar({ usuario, setUsuario }) {
             setGeocodingLoading(false);
           }
         },
-        (error) => {
+        () => {
           setGeocodingLoading(false);
           alert("Não foi possível obter sua localização por GPS. Digite o endereço ou arraste o pin no mapa.");
         },

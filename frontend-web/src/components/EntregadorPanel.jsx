@@ -62,12 +62,10 @@ const PRESETS = [
 export default function EntregadorPanel({ usuario }) {
   const [statusEntregador, setStatusEntregador] = useState('OFFLINE');
   const [entregasPendentes, setEntregasPendentes] = useState([]);
-  const [entregasProprias, setEntregasProprias] = useState([]);
   const [activeEntrega, setActiveEntrega] = useState(null);
   
   const [coords, setCoords] = useState([-22.9068, -43.1729]);
   const [loadingRadar, setLoadingRadar] = useState(false);
-  const [loadingActive, setLoadingActive] = useState(false);
   const [simulando, setSimulando] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
@@ -86,7 +84,6 @@ export default function EntregadorPanel({ usuario }) {
   // 1. Busca status e entregas do próprio entregador
   const fetchEntregadorDados = async () => {
     if (!entregadorId || loadingStatusRef.current) return;
-    setLoadingActive(true);
     try {
       const res = await authFetch(GET_ENTREGADOR_ENTREGAS, { id: String(entregadorId) });
 
@@ -96,8 +93,6 @@ export default function EntregadorPanel({ usuario }) {
       if (motorista && !loadingStatusRef.current) {
         setStatusEntregador(motorista.status || 'OFFLINE');
         const list = motorista.entregas || [];
-        setEntregasProprias(list);
-        
         if (motorista.latitude && motorista.longitude) {
           setCoords([motorista.latitude, motorista.longitude]);
         }
@@ -109,8 +104,6 @@ export default function EntregadorPanel({ usuario }) {
     } catch (e) {
       console.error(e);
       setError('Erro ao carregar dados do entregador.');
-    } finally {
-      setLoadingActive(false);
     }
   };
 
