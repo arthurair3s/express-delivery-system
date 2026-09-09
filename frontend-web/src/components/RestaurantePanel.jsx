@@ -28,7 +28,6 @@ const authFetch = (query, variables = {}) => {
 export default function RestaurantePanel({ usuario }) {
   const [restaurantes, setRestaurantes] = useState([]);
   const [selectedRestauranteId, setSelectedRestauranteId] = useState('');
-  const [activeRestaurante, setActiveRestaurante] = useState(null);
   
   // Abas: 'pedidos', 'cardapio', 'insights', 'config'
   const [activeTab, setActiveTab] = useState('pedidos');
@@ -81,7 +80,6 @@ export default function RestaurantePanel({ usuario }) {
     if (selectedRestauranteId) {
       const rest = restaurantes.find(r => String(r.id) === selectedRestauranteId);
       if (rest) {
-        setActiveRestaurante(rest);
         setConfig({
           nome: rest.nome || '',
           descricao: rest.descricao || '',

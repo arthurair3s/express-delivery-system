@@ -6,7 +6,6 @@ export default function MeusPedidos({ usuario, onSelectPedido }) {
   const [pedidos, setPedidos] = useState([]);
   const [restaurantes, setRestaurantes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   // 1. Carrega todos os restaurantes para poder cruzar o nome do restaurante pelo id
   const fetchRestaurantes = async () => {
@@ -52,7 +51,6 @@ export default function MeusPedidos({ usuario, onSelectPedido }) {
       setLoading(false);
     } catch (e) {
       console.error(e);
-      setError(e);
       setLoading(false);
     }
   };

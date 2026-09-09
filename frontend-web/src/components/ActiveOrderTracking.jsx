@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ACOMPANHAR_PEDIDO, ATUALIZAR_STATUS_ENTREGA, SIMULAR_DESLOCAMENTO, CRIAR_AVALIACAO, BUSCAR_CANDIDATOS, ATRIBUIR_ENTREGADOR } from '../graphql/queries';
+import { ACOMPANHAR_PEDIDO, CRIAR_AVALIACAO, BUSCAR_CANDIDATOS } from '../graphql/queries';
 import TrackingMap from './TrackingMap';
 import { API_URL } from '../config';
 import { Star } from 'lucide-react';
@@ -8,8 +8,6 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
   const [data, setData] = useState(null);
   const [candidatos, setCandidatos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [simulando, setSimulando] = useState(false);
 
   // Estados para Avaliação
   const [showRating, setShowRating] = useState(false);
@@ -52,7 +50,6 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
         })
         .catch(e => {
           console.error(e);
-          setError(e);
           setLoading(false);
         });
     };
@@ -64,11 +61,7 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
 
   useEffect(() => {
     // Polling de candidatos SOMENTE enquanto a entrega ainda não possui motoboy (não foi atribuída)
-    const entregaOcupada = data?.entregas?.[0];
-    if (entregaOcupada || !restaurante?.id) {
-      if (candidatos.length > 0) setCandidatos([]);
-      return;
-    }
+    if (data?.entregas?.[0] || !restaurante?.id) return;
 
     const fetchCandidatos = () => {
       const token = localStorage.getItem('token');
@@ -98,89 +91,6 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
     return () => clearInterval(cadInterval);
   }, [data, restaurante]);
 
-  const handleAtribuirEntregador = async () => {
-    setSimulando(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          query: ATRIBUIR_ENTREGADOR,
-          variables: { pedido_id: pedidoId }
-        })
-      }).then(r => r.json());
-
-      if (res.errors) throw new Error(res.errors[0].message);
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao escolher entregador: " + e.message);
-    } finally {
-      setSimulando(false);
-    }
-  };
-
-  const handleMudarStatus = async (novoStatus, entregaId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(API_URL, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          query: ATUALIZAR_STATUS_ENTREGA,
-          variables: { id: entregaId, status: novoStatus }
-        })
-      });
-
-      if (novoStatus.toUpperCase() === 'ENTREGUE') {
-        setShowRating(true);
-        ratingPromptedRef.current = true;
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao mudar o status!");
-    }
-  };
-
-  const handleIniciarSimulacao = async (entregaId) => {
-    if (!entregaId) {
-      alert("Aguarde a atribuição de um entregador...");
-      return;
-    }
-
-    setSimulando(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          query: SIMULAR_DESLOCAMENTO,
-          variables: { id: entregaId }
-        })
-      }).then(r => r.json());
-
-      if (res.errors) throw new Error(res.errors[0].message);
-      if (res.data.simularDeslocamento === false) {
-        throw new Error("O servidor não conseguiu calcular a rota para a simulação.");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao iniciar simulação: " + e.message);
-    } finally {
-      setSimulando(false);
-    }
-  };
-
   const handleEnviarAvaliacao = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -208,21 +118,14 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
     }
   };
 
-  // Helper para formatar segundos em texto legível
-  const formatarTempo = (segundos) => {
-    if (!segundos || segundos <= 0) return 'Chegou!';
-    const min = Math.floor(segundos / 60);
-    const seg = segundos % 60;
-    return `${min} min ${seg}s`;
-  };
-
   if (loading && !data) {
     return <p className="text-center py-20 text-gray-500">Localizando seu Entregador...</p>;
   }
 
   const entrega = data?.entregas?.[0];
   const moto = entrega?.entregador;
-  const rota = entrega?.rota?.caminho || [];
+  // Some com os candidatos assim que a entrega ganha um entregador
+  const candidatosVisiveis = entrega ? [] : candidatos;
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 animate-fade-in relative grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -279,7 +182,7 @@ export default function ActiveOrderTracking({ pedidoId, restaurante, onCancel })
       <div className="flex flex-col gap-4">
         <TrackingMap
           status={entrega?.status?.toUpperCase() || ''}
-          candidatos={candidatos}
+          candidatos={candidatosVisiveis}
           rotaColeta={entrega?.rota_coleta}
           rotaEntrega={entrega?.rota_entrega}
           motoPos={moto ? {
