@@ -501,7 +501,7 @@ export default function EntregadorPanel({ usuario }) {
                   />
                   <AjustarVista centro={coords} zoom={14} />
                 </MapaBase>
-                <div className="absolute bottom-2.5 left-2.5 z-[1000] bg-slate-900/90 text-white text-[9px] font-semibold py-1 px-2.5 rounded-full shadow backdrop-blur-sm pointer-events-none">
+                <div className="absolute bottom-5 left-2.5 z-[1000] bg-slate-900/90 text-white text-[9px] font-semibold py-1 px-2.5 rounded-full shadow backdrop-blur-sm pointer-events-none">
                   Arraste o 📍 para ajustar a posição
                 </div>
               </div>

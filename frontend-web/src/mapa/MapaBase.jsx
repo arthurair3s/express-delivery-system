@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { TILE } from './leaflet';
+
+// Só carrega `expandido`. Existe para que o AjustarVista, que é passado como
+// filho por quem usa o mapa, saiba que o container mudou de tamanho sem que a
+// chamada precise repassar isso na mão.
+const ContextoMapa = createContext({ expandido: false });
 
 /**
  * Enquadra o mapa a partir dos pontos que precisam ficar visíveis.
@@ -9,9 +14,14 @@ import { TILE } from './leaflet';
  * em si: o pai recria esse array a cada render — e alguns deles fazem polling —
  * então depender da identidade do objeto reenquadrava o mapa de segundo em
  * segundo, desfazendo o pan que o usuário tinha acabado de dar.
+ *
+ * `expandido` entra nas dependências de propósito: entrar e sair da tela cheia
+ * muda a área disponível, e o enquadramento que servia para uma não serve para
+ * a outra.
  */
 export function AjustarVista({ pontos, centro, zoom = 15 }) {
   const map = useMap();
+  const { expandido } = useContext(ContextoMapa);
 
   const visiveis = (pontos || []).filter(
     (p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]),
@@ -21,12 +31,16 @@ export function AjustarVista({ pontos, centro, zoom = 15 }) {
     : (centro || []).join(',');
 
   useEffect(() => {
-    // o container pode ter mudado de tamanho desde a última medição — ao abrir
-    // um modal, por exemplo — e sem isso o leaflet desenha sobre a área antiga
+    // o container acabou de mudar de tamanho; sem remedir, o leaflet enquadra
+    // sobre a área antiga
     map.invalidateSize();
 
     if (visiveis.length > 1) {
-      map.fitBounds(visiveis, { padding: [50, 50], maxZoom: 16 });
+      // padding proporcional: 50px fixos comiam um terço da largura de um mapa
+      // de 300px e jogavam marcadores para fora da vista ao reduzir da tela cheia
+      const { x, y } = map.getSize();
+      const folga = Math.round(Math.max(12, Math.min(50, Math.min(x, y) * 0.12)));
+      map.fitBounds(visiveis, { padding: [folga, folga], maxZoom: 16 });
     } else if (visiveis.length === 1) {
       map.setView(visiveis[0], zoom);
     } else if (centro) {
@@ -35,8 +49,27 @@ export function AjustarVista({ pontos, centro, zoom = 15 }) {
     // `visiveis` e `centro` são recriados a cada render; `chave` é o que
     // realmente muda quando as coordenadas mudam
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chave, zoom, map]);
+  }, [chave, zoom, map, expandido]);
 
+  return null;
+}
+
+/**
+ * Dessatura só a camada de tiles.
+ *
+ * O filtro vai no pane dos tiles, e não no mapa inteiro, porque a rota e os
+ * marcadores vivem em panes de SVG à parte — assim eles permanecem saturados e
+ * passam a ser a única cor forte sobre um fundo quase cinza.
+ *
+ * Aplicado por efeito em vez de <Pane>: `tilePane` é um pane nativo do leaflet,
+ * e o react-leaflet recusa redeclará-lo.
+ */
+function FiltroDosTiles({ filtro }) {
+  const map = useMap();
+  useEffect(() => {
+    const pane = map.getPane('tilePane');
+    if (pane) pane.style.filter = filtro;
+  }, [map, filtro]);
   return null;
 }
 
@@ -66,7 +99,7 @@ const IconeExpandir = ({ expandido }) => (
  * Existe porque os quatro mapas divergiam em tudo que o usuário percebe: dois
  * temas de tile diferentes (dois deles no mesmo painel), zoom com e sem
  * controle, e atribuição presente em apenas um — o que, além de inconsistente,
- * é exigência de licença do OSM.
+ * é exigência de licença.
  *
  * O zoom por rolagem fica desligado de propósito: todos estes mapas vivem
  * dentro de páginas roláveis, e capturar a roda prendia a rolagem da página em
@@ -118,8 +151,9 @@ export default function MapaBase({
         style={{ height: '100%', width: '100%' }}
         {...props}
       >
+        <FiltroDosTiles filtro={TILE.filtro} />
         <TileLayer url={TILE.url} attribution={TILE.attribution} />
-        {children}
+        <ContextoMapa.Provider value={{ expandido }}>{children}</ContextoMapa.Provider>
       </MapContainer>
 
       {legenda}
