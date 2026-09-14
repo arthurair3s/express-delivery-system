@@ -84,9 +84,13 @@
   .sw input:not(:checked) ~ .txt{color:var(--faint); text-decoration:line-through; text-decoration-thickness:1px}
   .sw input:not(:checked) ~ .dash{opacity:.3}
 
-  .lg{display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:var(--muted)}
+  .lg{display:flex; flex-direction:column; gap:7px; font-size:12.5px; color:var(--muted)}
   .lg div{display:flex; align-items:center; gap:9px}
-  .chip{width:15px; height:15px; border-radius:4px; border:1.5px solid; flex:none}
+  .lgi{
+    width:16px; height:16px; flex:none;
+    fill:none; stroke:currentColor; stroke-width:1.6;
+    stroke-linecap:round; stroke-linejoin:round;
+  }
 
   .hint{
     font-size:12px; color:var(--faint); border-top:1px solid var(--line);
@@ -132,6 +136,21 @@
   .node:focus-visible rect{stroke:var(--sync); stroke-width:2.5}
   .node:focus{outline:none}
 
+  /* O ícone herda a cor do nó por currentColor: a cor segue dizendo a camada,
+     o ícone passa a dizer o tipo (banco, fila, microserviço...). */
+  .node .ico{
+    fill:none; stroke:currentColor; stroke-width:1.6;
+    stroke-linecap:round; stroke-linejoin:round;
+    opacity:.9; pointer-events:none;
+  }
+  .n-person .ico{color:var(--person)}
+  .n-app    .ico{color:var(--sync)}
+  .n-msg    .ico{color:var(--work)}
+  .n-cdc    .ico{color:var(--cdc)}
+  .n-data   .ico{color:var(--muted)}
+  .n-ext    .ico{color:var(--obs)}
+  .n-obs    .ico{color:var(--obs)}
+
   .n-person rect{fill:var(--person-bg); stroke:var(--person)}
   .n-person .nt{fill:var(--person)}
   .n-app rect{fill:var(--sync-bg); stroke:var(--sync)}
@@ -161,6 +180,16 @@
     transition:transform .22s cubic-bezier(.4,0,.2,1); z-index:20;
   }
   .drawer.open{transform:none}
+  /* Distintivo de tipo: repete no painel o que o ícone do nó já diz, para
+     quem chega pelo painel sem ter reparado no ícone do mapa. */
+  .drawer .tipo{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); background:var(--surface-2);
+    border:1px solid var(--line); border-radius:999px;
+    padding:3px 10px 3px 8px; margin:0 0 10px;
+  }
+  .drawer .tipo .lgi{width:13px; height:13px}
   .drawer .papel{
     font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:500;
     letter-spacing:.12em; text-transform:uppercase; color:var(--sync);
@@ -237,12 +266,17 @@
     <div class="grp">
       <h2>Tipos</h2>
       <div class="lg">
-        <div><span class="chip" style="background:var(--person-bg);border-color:var(--person)"></span>Pessoa</div>
-        <div><span class="chip" style="background:var(--sync-bg);border-color:var(--sync)"></span>Aplicação</div>
-        <div><span class="chip" style="background:var(--work-bg);border-color:var(--work)"></span>Mensageria</div>
-        <div><span class="chip" style="background:var(--cdc-bg);border-color:var(--cdc)"></span>Pipeline de CDC</div>
-        <div><span class="chip" style="background:var(--surface-2);border-color:var(--line-strong)"></span>Armazenamento</div>
-        <div><span class="chip" style="border-color:var(--obs);border-style:dashed"></span>Sistema externo</div>
+        <div style="color:var(--person)"><svg class="lgi" aria-hidden="true"><use href="#i-pessoa"/></svg><span style="color:var(--muted)">Pessoa</span></div>
+        <div style="color:var(--sync)"><svg class="lgi" aria-hidden="true"><use href="#i-ui"/></svg><span style="color:var(--muted)">Interface web</span></div>
+        <div style="color:var(--sync)"><svg class="lgi" aria-hidden="true"><use href="#i-gateway"/></svg><span style="color:var(--muted)">API Gateway</span></div>
+        <div style="color:var(--sync)"><svg class="lgi" aria-hidden="true"><use href="#i-api"/></svg><span style="color:var(--muted)">API · orquestrador</span></div>
+        <div style="color:var(--sync)"><svg class="lgi" aria-hidden="true"><use href="#i-servico"/></svg><span style="color:var(--muted)">Microserviço</span></div>
+        <div style="color:var(--work)"><svg class="lgi" aria-hidden="true"><use href="#i-fila"/></svg><span style="color:var(--muted)">Fila de trabalho</span></div>
+        <div style="color:var(--cdc)"><svg class="lgi" aria-hidden="true"><use href="#i-stream"/></svg><span style="color:var(--muted)">Stream de replicação</span></div>
+        <div style="color:var(--muted)"><svg class="lgi" aria-hidden="true"><use href="#i-banco"/></svg><span style="color:var(--muted)">Banco de dados</span></div>
+        <div style="color:var(--muted)"><svg class="lgi" aria-hidden="true"><use href="#i-cache"/></svg><span style="color:var(--muted)">Cache · chave-valor</span></div>
+        <div style="color:var(--obs)"><svg class="lgi" aria-hidden="true"><use href="#i-obs"/></svg><span style="color:var(--muted)">Observabilidade</span></div>
+        <div style="color:var(--obs)"><svg class="lgi" aria-hidden="true"><use href="#i-externo"/></svg><span style="color:var(--muted)">Sistema externo</span></div>
       </div>
     </div>
 
@@ -267,6 +301,36 @@
           <path d="M0,1 L7,4 L0,7 z" fill="var(--cdc)"/></marker>
         <marker id="ah-obs" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
           <path d="M0,1 L7,4 L0,7 z" fill="var(--obs)"/></marker>
+
+        <!-- Ícones de tipo. Traço fino, 16x16, herdando a cor do nó via
+             currentColor: a cor continua dizendo a camada, o ícone diz o tipo. -->
+        <symbol id="i-pessoa" viewBox="0 0 16 16">
+          <circle cx="8" cy="5" r="2.6"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></symbol>
+        <symbol id="i-ui" viewBox="0 0 16 16">
+          <rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M1.5 6h13"/></symbol>
+        <symbol id="i-gateway" viewBox="0 0 16 16">
+          <path d="M8 1.8l5.2 2v4.3c0 3.1-2.2 5.5-5.2 6.4-3-.9-5.2-3.3-5.2-6.4V3.8z"/></symbol>
+        <symbol id="i-api" viewBox="0 0 16 16">
+          <path d="M6 2.4C4 2.4 4.2 6 3 7.2c-.5.5-.9.6-1.3.8.4.2.8.3 1.3.8C4.2 10 4 13.6 6 13.6"/>
+          <path d="M10 2.4c2 0 1.8 3.6 3 4.8.5.5.9.6 1.3.8-.4.2-.8.3-1.3.8-1.2 1.2-1 4.8-3 4.8"/></symbol>
+        <symbol id="i-servico" viewBox="0 0 16 16">
+          <path d="M8 1.6l5.6 3v6.8L8 14.4 2.4 11.4V4.6z"/><path d="M2.4 4.6L8 7.6l5.6-3M8 7.6v6.8"/></symbol>
+        <symbol id="i-fila" viewBox="0 0 16 16">
+          <rect x="2" y="3" width="12" height="2.6" rx="1.1"/>
+          <rect x="2" y="6.7" width="12" height="2.6" rx="1.1"/>
+          <rect x="2" y="10.4" width="12" height="2.6" rx="1.1"/></symbol>
+        <symbol id="i-stream" viewBox="0 0 16 16">
+          <path d="M1.5 5h9M8 2.5L10.5 5 8 7.5"/><path d="M14.5 11h-9M8 8.5L5.5 11 8 13.5"/></symbol>
+        <symbol id="i-banco" viewBox="0 0 16 16">
+          <ellipse cx="8" cy="3.8" rx="5.2" ry="2.2"/>
+          <path d="M2.8 3.8v8.4c0 1.2 2.3 2.2 5.2 2.2s5.2-1 5.2-2.2V3.8"/>
+          <path d="M2.8 8c0 1.2 2.3 2.2 5.2 2.2s5.2-1 5.2-2.2"/></symbol>
+        <symbol id="i-cache" viewBox="0 0 16 16">
+          <path d="M9.2 1.5L3.4 9h4.2l-.6 5.5L13.4 7H9z"/></symbol>
+        <symbol id="i-externo" viewBox="0 0 16 16">
+          <path d="M4.6 12.8h6.9a3.1 3.1 0 0 0 .4-6.2 4.3 4.3 0 0 0-8.2-1.1 3.2 3.2 0 0 0 .9 7.3z"/></symbol>
+        <symbol id="i-obs" viewBox="0 0 16 16">
+          <path d="M1.5 8.5h3L6 4.8l2.5 6.6L10.4 8.5h4.1"/></symbol>
       </defs>
 
       <text class="band-label" x="60" y="160">LOGÍSTICA</text>
@@ -354,93 +418,114 @@
       <g class="node n-person" data-id="users" tabindex="0" role="button" aria-label="Usuários">
         <rect x="430" y="24" width="250" height="46" rx="10"/>
         <text class="nt" x="555" y="44" text-anchor="middle">Cliente · Lojista · Entregador</text>
-        <text class="ns" x="555" y="59" text-anchor="middle">navegador</text></g>
+        <text class="ns" x="555" y="59" text-anchor="middle">navegador</text>
+        <use class="ico" href="#i-pessoa" x="439" y="32" width="13" height="13"/></g>
       <g class="node n-app" data-id="web" tabindex="0" role="button" aria-label="Frontend Web">
         <rect x="430" y="90" width="250" height="48" rx="10"/>
         <text class="nt" x="555" y="111" text-anchor="middle">Frontend Web</text>
-        <text class="ns" x="555" y="126" text-anchor="middle">React 19 · Vite · :5173</text></g>
+        <text class="ns" x="555" y="126" text-anchor="middle">React 19 · Vite · :5173</text>
+        <use class="ico" href="#i-ui" x="439" y="98" width="13" height="13"/></g>
       <g class="node n-app" data-id="kong" tabindex="0" role="button" aria-label="API Gateway Kong">
         <rect x="430" y="158" width="250" height="48" rx="10"/>
         <text class="nt" x="555" y="179" text-anchor="middle">API Gateway · Kong</text>
-        <text class="ns" x="555" y="194" text-anchor="middle">JWT · rate limit · CORS · :8000</text></g>
+        <text class="ns" x="555" y="194" text-anchor="middle">JWT · rate limit · CORS · :8000</text>
+        <use class="ico" href="#i-gateway" x="439" y="166" width="13" height="13"/></g>
       <g class="node n-app" data-id="api" tabindex="0" role="button" aria-label="Backend Core">
         <rect x="430" y="226" width="250" height="64" rx="10"/>
         <text class="nt" x="555" y="250" text-anchor="middle">Backend Core</text>
         <text class="ns" x="555" y="266" text-anchor="middle">Node · TypeScript · GraphQL</text>
-        <text class="ns" x="555" y="280" text-anchor="middle">Clean Architecture · :4000</text></g>
+        <text class="ns" x="555" y="280" text-anchor="middle">Clean Architecture · :4000</text>
+        <use class="ico" href="#i-api" x="439" y="234" width="13" height="13"/></g>
       <g class="node n-msg" data-id="rmq" tabindex="0" role="button" aria-label="RabbitMQ">
         <rect x="290" y="330" width="172" height="54" rx="10"/>
         <text class="nt" x="376" y="352" text-anchor="middle">RabbitMQ</text>
-        <text class="ns" x="376" y="368" text-anchor="middle">carrega trabalho · DLQ</text></g>
+        <text class="ns" x="376" y="368" text-anchor="middle">carrega trabalho · DLQ</text>
+        <use class="ico" href="#i-fila" x="299" y="338" width="13" height="13"/></g>
       <g class="node n-data" data-id="pg1" tabindex="0" role="button" aria-label="Banco principal">
         <rect x="430" y="430" width="118" height="50" rx="10"/>
         <text class="nt" x="489" y="451" text-anchor="middle">Principal</text>
-        <text class="ns" x="489" y="466" text-anchor="middle">PostgreSQL 15</text></g>
+        <text class="ns" x="489" y="466" text-anchor="middle">PostgreSQL 15</text>
+        <use class="ico" href="#i-banco" x="439" y="438" width="13" height="13"/></g>
       <g class="node n-data" data-id="rds" tabindex="0" role="button" aria-label="Redis">
         <rect x="562" y="430" width="118" height="50" rx="10"/>
         <text class="nt" x="621" y="451" text-anchor="middle">Redis</text>
-        <text class="ns" x="621" y="466" text-anchor="middle">GEO + cache</text></g>
+        <text class="ns" x="621" y="466" text-anchor="middle">GEO + cache</text>
+        <use class="ico" href="#i-cache" x="571" y="438" width="13" height="13"/></g>
       <g class="node n-ext" data-id="stripe" tabindex="0" role="button" aria-label="Stripe">
         <rect x="686" y="430" width="104" height="50" rx="10"/>
         <text class="nt" x="738" y="451" text-anchor="middle">Stripe</text>
-        <text class="ns" x="738" y="466" text-anchor="middle">pagamentos</text></g>
+        <text class="ns" x="738" y="466" text-anchor="middle">pagamentos</text>
+        <use class="ico" href="#i-externo" x="695" y="438" width="13" height="13"/></g>
 
       <!-- nós: logística -->
       <g class="node n-app" data-id="ent" tabindex="0" role="button" aria-label="MS Entregadores">
         <rect x="60" y="170" width="210" height="54" rx="10"/>
         <text class="nt" x="165" y="192" text-anchor="middle">MS Entregadores</text>
-        <text class="ns" x="165" y="208" text-anchor="middle">.NET 10 · gRPC · :5001</text></g>
+        <text class="ns" x="165" y="208" text-anchor="middle">.NET 10 · gRPC · :5001</text>
+        <use class="ico" href="#i-servico" x="69" y="178" width="13" height="13"/></g>
       <g class="node n-data" data-id="pg2" tabindex="0" role="button" aria-label="Banco de entregadores">
         <rect x="60" y="246" width="210" height="44" rx="10"/>
         <text class="nt" x="165" y="264" text-anchor="middle">Banco Entregadores</text>
-        <text class="ns" x="165" y="279" text-anchor="middle">PostgreSQL 15 · EF Core</text></g>
+        <text class="ns" x="165" y="279" text-anchor="middle">PostgreSQL 15 · EF Core</text>
+        <use class="ico" href="#i-banco" x="69" y="254" width="13" height="13"/></g>
       <g class="node n-app" data-id="rot" tabindex="0" role="button" aria-label="MS Roteamento">
         <rect x="60" y="326" width="210" height="54" rx="10"/>
         <text class="nt" x="165" y="348" text-anchor="middle">MS Roteamento</text>
-        <text class="ns" x="165" y="364" text-anchor="middle">.NET 10 · gRPC · :5002</text></g>
+        <text class="ns" x="165" y="364" text-anchor="middle">.NET 10 · gRPC · :5002</text>
+        <use class="ico" href="#i-servico" x="69" y="334" width="13" height="13"/></g>
       <g class="node n-ext" data-id="osrm" tabindex="0" role="button" aria-label="OSRM">
         <rect x="60" y="402" width="210" height="44" rx="10"/>
         <text class="nt" x="165" y="420" text-anchor="middle">OSRM</text>
-        <text class="ns" x="165" y="435" text-anchor="middle">motor de rotas · :5000</text></g>
+        <text class="ns" x="165" y="435" text-anchor="middle">motor de rotas · :5000</text>
+        <use class="ico" href="#i-externo" x="69" y="410" width="13" height="13"/></g>
 
       <!-- nós: análise -->
       <g class="node n-app" data-id="rec" tabindex="0" role="button" aria-label="MS Recomendação">
         <rect x="800" y="170" width="180" height="54" rx="10"/>
         <text class="nt" x="890" y="192" text-anchor="middle">MS Recomendação</text>
-        <text class="ns" x="890" y="208" text-anchor="middle">Python · read-model · :50053</text></g>
+        <text class="ns" x="890" y="208" text-anchor="middle">Python · read-model · :50053</text>
+        <use class="ico" href="#i-servico" x="809" y="178" width="13" height="13"/></g>
       <g class="node n-data" data-id="pg3" tabindex="0" role="button" aria-label="Banco analítico">
         <rect x="800" y="246" width="180" height="44" rx="10"/>
         <text class="nt" x="890" y="264" text-anchor="middle">Banco Analítico</text>
-        <text class="ns" x="890" y="279" text-anchor="middle">réplica derivada + assinaturas</text></g>
+        <text class="ns" x="890" y="279" text-anchor="middle">réplica derivada + assinaturas</text>
+        <use class="ico" href="#i-banco" x="809" y="254" width="13" height="13"/></g>
       <g class="node n-app" data-id="not" tabindex="0" role="button" aria-label="MS Notificações">
         <rect x="800" y="326" width="180" height="54" rx="10"/>
         <text class="nt" x="890" y="348" text-anchor="middle">MS Notificações</text>
-        <text class="ns" x="890" y="364" text-anchor="middle">Python · pika</text></g>
+        <text class="ns" x="890" y="364" text-anchor="middle">Python · pika</text>
+        <use class="ico" href="#i-servico" x="809" y="334" width="13" height="13"/></g>
       <g class="node n-ext" data-id="mailtrap" tabindex="0" role="button" aria-label="Mailtrap">
         <rect x="800" y="402" width="180" height="44" rx="10"/>
         <text class="nt" x="890" y="420" text-anchor="middle">Mailtrap</text>
-        <text class="ns" x="890" y="435" text-anchor="middle">e-mail transacional</text></g>
+        <text class="ns" x="890" y="435" text-anchor="middle">e-mail transacional</text>
+        <use class="ico" href="#i-externo" x="809" y="410" width="13" height="13"/></g>
 
       <!-- nós: CDC -->
       <g class="node n-cdc" data-id="kfk" tabindex="0" role="button" aria-label="Kafka">
         <rect x="1010" y="330" width="120" height="46" rx="10"/>
         <text class="nt" x="1070" y="350" text-anchor="middle">Kafka</text>
-        <text class="ns" x="1070" y="365" text-anchor="middle">KRaft</text></g>
+        <text class="ns" x="1070" y="365" text-anchor="middle">KRaft</text>
+        <use class="ico" href="#i-stream" x="1019" y="338" width="13" height="13"/></g>
       <g class="node n-cdc" data-id="dbz" tabindex="0" role="button" aria-label="Debezium Connect">
         <rect x="1010" y="430" width="120" height="46" rx="10"/>
         <text class="nt" x="1070" y="450" text-anchor="middle">Debezium</text>
-        <text class="ns" x="1070" y="465" text-anchor="middle">Connect 2.4</text></g>
+        <text class="ns" x="1070" y="465" text-anchor="middle">Connect 2.4</text>
+        <use class="ico" href="#i-stream" x="1019" y="438" width="13" height="13"/></g>
 
       <!-- nós: observabilidade -->
       <g class="node n-obs" data-id="jaeger" tabindex="0" role="button" aria-label="Jaeger">
         <rect x="700" y="530" width="114" height="40" rx="8"/>
-        <text class="nt" x="757" y="555" text-anchor="middle">Jaeger</text></g>
+        <text class="nt" x="757" y="555" text-anchor="middle">Jaeger</text>
+        <use class="ico" href="#i-obs" x="709" y="538" width="13" height="13"/></g>
       <g class="node n-obs" data-id="prom" tabindex="0" role="button" aria-label="Prometheus">
         <rect x="830" y="530" width="134" height="40" rx="8"/>
-        <text class="nt" x="897" y="555" text-anchor="middle">Prometheus</text></g>
+        <text class="nt" x="897" y="555" text-anchor="middle">Prometheus</text>
+        <use class="ico" href="#i-obs" x="839" y="538" width="13" height="13"/></g>
       <g class="node n-obs" data-id="grafana" tabindex="0" role="button" aria-label="Grafana">
         <rect x="980" y="530" width="110" height="40" rx="8"/>
-        <text class="nt" x="1035" y="555" text-anchor="middle">Grafana</text></g>
+        <text class="nt" x="1035" y="555" text-anchor="middle">Grafana</text>
+        <use class="ico" href="#i-obs" x="989" y="538" width="13" height="13"/></g>
     </svg>
 
     <div class="foot">
@@ -466,6 +551,7 @@
 
 <aside class="drawer" id="drawer" role="complementary" aria-live="polite">
   <button class="close" id="close" type="button" aria-label="Fechar">×</button>
+  <p class="tipo mono" id="d-tipo"><svg class="lgi" aria-hidden="true"><use id="d-tipo-ico" href="#i-servico"/></svg><span id="d-tipo-txt"></span></p>
   <p class="papel mono" id="d-papel"></p>
   <h3 id="d-nome"></h3>
   <p class="stack mono" id="d-stack"></p>
@@ -520,6 +606,23 @@
     grafana:{nome:"Grafana",stack:"Grafana OSS",desc:"Sobe com datasources e dashboard já provisionados — nada a configurar depois do compose up. O painel tem dez visualizações em três seções: negócio, replicação e saúde técnica.",papel:"Painéis",meta:{Porta:"3000",Fontes:"Prometheus · Jaeger",Dashboard:"Visão Operacional, 10 painéis"},note:"O datasource do Jaeger foi adicionado junto: os diagramas de arquitetura já descreviam a ligação entre Grafana e Jaeger, mas ela não existia no provisionamento."}
   };
 
+  // Mesma taxonomia dos ícones do mapa, numa fonte só: o nó e o painel não
+  // podem discordar sobre o que a peça é.
+  var TIPOS = {
+    users:['pessoa','Pessoa'], web:['ui','Interface web'], kong:['gateway','API Gateway'],
+    api:['api','API · orquestrador'],
+    ent:['servico','Microserviço'], rot:['servico','Microserviço'],
+    rec:['servico','Microserviço'], not:['servico','Microserviço'],
+    rmq:['fila','Fila de trabalho'], kfk:['stream','Stream de replicação'],
+    dbz:['stream','Stream de replicação'],
+    pg1:['banco','Banco de dados'], pg2:['banco','Banco de dados'],
+    pg3:['banco','Banco de dados'], rds:['cache','Cache · chave-valor'],
+    stripe:['externo','Sistema externo'], osrm:['externo','Sistema externo'],
+    mailtrap:['externo','Sistema externo'],
+    jaeger:['obs','Observabilidade'], prom:['obs','Observabilidade'],
+    grafana:['obs','Observabilidade']
+  };
+
   var svg = document.getElementById('map');
   var nos = Array.prototype.slice.call(svg.querySelectorAll('.node'));
   var arestas = Array.prototype.slice.call(svg.querySelectorAll('.edge'));
@@ -549,6 +652,9 @@
 
     var d = DADOS[id];
     if (!d) return;
+    var tipo = TIPOS[id] || ['servico', ''];
+    document.getElementById('d-tipo-ico').setAttribute('href', '#i-' + tipo[0]);
+    document.getElementById('d-tipo-txt').textContent = tipo[1];
     document.getElementById('d-papel').textContent = d.papel || '';
     document.getElementById('d-nome').textContent = d.nome;
     document.getElementById('d-stack').textContent = d.stack;
