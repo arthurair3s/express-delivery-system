@@ -1,6 +1,15 @@
 # 📦 Express Delivery - Real-time Microservices Simulation
 
-Este projeto é um ecossistema de alta performance projetado para demonstrar a aplicação prática de arquiteturas modernas e escaláveis. Desenvolvido com foco em **Microserviços**, **Comunicação gRPC** e **Geoprocessamento**, o foco principal reside na implementação de padrões de resiliência e baixa latência em sistemas distribuídos.
+Um clone de iFood construído como **prova de conceito**: o domínio de delivery
+é o pretexto, e o objetivo real é aplicar, ponta a ponta e num sistema que
+funciona, os conceitos de arquitetura que costumam ficar no slide —
+**arquitetura hexagonal**, **SOLID**, **elementos de Domain-Driven Design**,
+microserviços com **gRPC**, mensageria com papéis separados, **Change Data
+Capture** e observabilidade.
+
+É um laboratório, e o README é escrito como tal: cada padrão aqui vem com o que
+foi de fato implementado, o que ficou de fora e por quê. Onde um conceito foi
+aplicado só em parte, está dito que foi só em parte.
 
 ---
 
@@ -174,15 +183,22 @@ JWT.
     Strategy sem tocar no que existe (O/L). A exceção está documentada nos
     trade-offs: o `ProcessarPagamentoUseCase` ainda seleciona a estratégia com um
     `switch` sobre classes concretas.
-*   **Blocos táticos de DDD — sem a parte estratégica**: os Value Objects são
-    reais (`Email`, `Dinheiro`, `Coordenada`, `SenhaHash` são imutáveis e se
-    validam no construtor, falhando alto em vez de aceitar estado inválido), as
-    entidades têm comportamento em vez de serem anêmicas (`Pedido` governa as
-    próprias transições de status), os repositórios são portas do domínio e a
-    linguagem do código é a do negócio. **Não** há agregados declarados, eventos
-    de domínio nem bounded contexts: os eventos que existem são de
-    infraestrutura, publicados pelos casos de uso, e os módulos são divisões
-    técnicas dentro de um serviço. Por isso "blocos táticos", e não "DDD".
+*   **Domain-Driven Design, pelos blocos táticos**: o estudo aqui foi o DDD
+    tático, e ele está aplicado de verdade. Os **Value Objects** (`Email`,
+    `Dinheiro`, `Coordenada`, `SenhaHash`) são imutáveis e se validam no próprio
+    construtor — um e-mail inválido não existe como objeto, em vez de existir e
+    ser checado depois. As **entidades têm comportamento** em vez de serem sacos
+    de getters: é o `Pedido` que decide se pode mudar de status, não o caso de
+    uso. Os **repositórios são portas declaradas pelo domínio**, e a linguagem do
+    código é a do negócio, em português, sem tradução para jargão técnico.
+
+    O **DDD estratégico ficou fora, de propósito**: não há agregados declarados,
+    eventos de domínio nem bounded contexts formais — os eventos que circulam são
+    de infraestrutura, publicados pelos casos de uso, e os módulos são divisão
+    técnica dentro de um serviço. Num sistema deste tamanho, agregado e context
+    map seriam cerimônia sem problema que os justifique; são o passo seguinte
+    natural se o domínio crescer. Fica registrado para que ninguém leia "DDD" e
+    espere encontrar o que não está lá.
 *   **Isolamento físico de bancos**: PostgreSQL dedicado para o núcleo, para
     entregadores e para o read-model analítico. Nenhum serviço lê o banco do
     outro; para saber algo sobre a frota, o Backend Core faz gRPC.
@@ -346,7 +362,7 @@ E dois bugs de implementação:
 
 ## 🚧 Status e Visão de Futuro (Roadmap)
 
-Este projeto funciona como um **laboratório vivo de arquitetura de software**, mantendo sua base de código alinhada às melhores práticas do mercado.
+Sendo uma prova de conceito, a lista abaixo é parte do projeto, e não um apêndice: cada item é um conceito que ainda não foi estudado aqui.
 
 ### Próximas evoluções planejadas
 *   **Integração contínua**: as quatro suítes existem e rodam com um comando, mas **ainda não há pipeline**. A decisão foi consciente: primeiro construir testes que valem a pena executar, depois automatizá-los. O próximo passo é um workflow do GitHub Actions com três jobs em paralelo — `setup-node` para o Vitest, `setup-dotnet` para o xUnit e `setup-python` para os dois pytest —, disparado em push e pull request, com badge no topo deste README. Nada disso exige serviço de apoio, já que nenhuma suíte precisa de banco ou broker.
