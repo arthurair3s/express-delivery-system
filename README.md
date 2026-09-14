@@ -113,7 +113,7 @@ docker compose up --build
 | :--- | :--- | :--- |
 | **Frontend** | React, Leaflet | UI moderna e visualização de geoprocessamento com marcadores personalizados (cliente, restaurante e moto) |
 | **Gateway** | Kong 3.4 (DB-less, declarativo) | Porta de entrada: validação de JWT, CORS, rate limit, correlation-id e limite de payload |
-| **API Principal** | Node.js (TypeScript), Apollo Server (GraphQL) | Orquestração de Microserviços e Schema unificado sob Clean Architecture |
+| **API Principal** | Node.js (TypeScript), Apollo Server (GraphQL) | Orquestração de microserviços e schema unificado, sob arquitetura hexagonal |
 | **Microserviços C#** | .NET 10, gRPC, EF Core | Performance extrema para gerenciamento de entregadores e roteamento |
 | **Microserviços Python** | Python 3.12, FastAPI, gRPC, Pika, urllib | Motores de recomendação de precificação B2B e envio de notificações resilientes via Mailtrap HTTP/SMTP |
 | **Bancos de Dados** | PostgreSQL 15, Redis 7 (Redis Geo) | Persistência física isolada por domínio e cache/localização ultra-rápida |
@@ -158,11 +158,31 @@ JWT.
 ## 🏗️ Como foi construído
 
 ### Arquitetura e organização
-*   **Clean Architecture com inversão de dependência**: Presentation (resolvers
-    GraphQL), Application (casos de uso atômicos), Domain (entidades, Value
-    Objects e portas) e Infrastructure. A infraestrutura aponta para o domínio,
-    nunca o contrário — e a suíte de testes prova isso, exercitando casos de uso
-    com dublês de todas as portas, sem Docker.
+*   **Arquitetura Hexagonal (Ports & Adapters), em quatro camadas**: Presentation
+    (resolvers GraphQL), Application (casos de uso atômicos), Domain (entidades,
+    Value Objects e portas) e Infrastructure. Os diagramas a chamam de *Clean
+    Architecture*: é o mesmo desenho — a regra de dependência apontando para
+    dentro —, e o nome hexagonal é usado aqui porque o código fala literalmente
+    em portas e adaptadores. São 25 portas — 12 declaradas pelo
+    próprio domínio — contra 14 adaptadores que as implementam: a infraestrutura
+    aponta para o domínio, nunca o contrário. A suíte de testes prova isso,
+    exercitando casos de uso com dublês de todas as portas, sem Docker.
+*   **SOLID, com uma exceção conhecida**: a inversão de dependência (D) é a
+    espinha dorsal, e o princípio da segregação de interfaces (I) aparece nas
+    portas pequenas e específicas em vez de uma interface única e inchada. Cada
+    caso de uso faz uma coisa (S), e novos métodos de pagamento entram por
+    Strategy sem tocar no que existe (O/L). A exceção está documentada nos
+    trade-offs: o `ProcessarPagamentoUseCase` ainda seleciona a estratégia com um
+    `switch` sobre classes concretas.
+*   **Blocos táticos de DDD — sem a parte estratégica**: os Value Objects são
+    reais (`Email`, `Dinheiro`, `Coordenada`, `SenhaHash` são imutáveis e se
+    validam no construtor, falhando alto em vez de aceitar estado inválido), as
+    entidades têm comportamento em vez de serem anêmicas (`Pedido` governa as
+    próprias transições de status), os repositórios são portas do domínio e a
+    linguagem do código é a do negócio. **Não** há agregados declarados, eventos
+    de domínio nem bounded contexts: os eventos que existem são de
+    infraestrutura, publicados pelos casos de uso, e os módulos são divisões
+    técnicas dentro de um serviço. Por isso "blocos táticos", e não "DDD".
 *   **Isolamento físico de bancos**: PostgreSQL dedicado para o núcleo, para
     entregadores e para o read-model analítico. Nenhum serviço lê o banco do
     outro; para saber algo sobre a frota, o Backend Core faz gRPC.
