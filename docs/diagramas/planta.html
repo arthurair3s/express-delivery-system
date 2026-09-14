@@ -341,16 +341,16 @@
 
       <!-- síncrono -->
       <g class="edge e-sync" data-a="users" data-b="web">
-        <line x1="555" y1="70" x2="555" y2="88" marker-end="url(#ah-sync)"/></g>
+        <line x1="555" y1="70" x2="555" y2="86" marker-end="url(#ah-sync)"/></g>
       <g class="edge e-sync" data-a="web" data-b="kong">
-        <line x1="555" y1="138" x2="555" y2="156" marker-end="url(#ah-sync)"/>
+        <line x1="555" y1="138" x2="555" y2="154" marker-end="url(#ah-sync)"/>
         <text x="563" y="152">HTTPS</text></g>
       <g class="edge e-sync" data-a="kong" data-b="api">
-        <line x1="555" y1="206" x2="555" y2="224" marker-end="url(#ah-sync)"/>
+        <line x1="555" y1="206" x2="555" y2="222" marker-end="url(#ah-sync)"/>
         <text x="563" y="220">GraphQL</text></g>
 
       <g class="edge e-sync" data-a="api" data-b="ent">
-        <line x1="428" y1="245" x2="274" y2="200" marker-end="url(#ah-sync)"/>
+        <line x1="428" y1="245" x2="274" y2="219" marker-end="url(#ah-sync)"/>
         <text x="318" y="212">gRPC</text></g>
       <g class="edge e-sync" data-a="api" data-b="rot">
         <line x1="428" y1="272" x2="274" y2="340" marker-end="url(#ah-sync)"/>
@@ -360,59 +360,59 @@
         <text x="690" y="212">gRPC</text></g>
 
       <g class="edge e-sync" data-a="api" data-b="pg1">
-        <line x1="489" y1="290" x2="489" y2="428" marker-end="url(#ah-sync)"/>
-        <text x="428" y="364">Prisma</text></g>
+        <line x1="489" y1="290" x2="489" y2="426" marker-end="url(#ah-sync)"/>
+        <text x="497" y="364">Prisma</text></g>
       <g class="edge e-sync" data-a="api" data-b="rds">
-        <line x1="621" y1="290" x2="621" y2="428" marker-end="url(#ah-sync)"/>
+        <line x1="621" y1="290" x2="621" y2="426" marker-end="url(#ah-sync)"/>
         <text x="629" y="364">cache</text></g>
       <g class="edge e-sync" data-a="api" data-b="stripe">
-        <line x1="672" y1="290" x2="734" y2="428" marker-end="url(#ah-sync)"/>
+        <line x1="672" y1="290" x2="733" y2="426" marker-end="url(#ah-sync)"/>
         <text x="716" y="360">REST</text></g>
 
       <g class="edge e-sync" data-a="ent" data-b="pg2">
-        <line x1="165" y1="224" x2="165" y2="244" marker-end="url(#ah-sync)"/></g>
+        <line x1="165" y1="224" x2="165" y2="242" marker-end="url(#ah-sync)"/></g>
       <g class="edge e-sync" data-a="ent" data-b="rds">
-        <path d="M270,182 L302,182 L302,306 L556,306 L556,455 L560,455" marker-end="url(#ah-sync)"/>
+        <path d="M270,182 L302,182 L302,306 L556,306 L556,455 L558,455" marker-end="url(#ah-sync)"/>
         <text x="330" y="300">Redis GEO</text></g>
       <g class="edge e-sync" data-a="rot" data-b="osrm">
-        <line x1="165" y1="380" x2="165" y2="400" marker-end="url(#ah-sync)"/></g>
+        <line x1="165" y1="380" x2="165" y2="398" marker-end="url(#ah-sync)"/></g>
       <g class="edge e-sync" data-a="rec" data-b="pg3">
-        <line x1="890" y1="224" x2="890" y2="244" marker-end="url(#ah-sync)"/></g>
+        <line x1="890" y1="224" x2="890" y2="242" marker-end="url(#ah-sync)"/></g>
       <g class="edge e-sync" data-a="not" data-b="mailtrap">
-        <line x1="890" y1="380" x2="890" y2="400" marker-end="url(#ah-sync)"/></g>
+        <line x1="890" y1="380" x2="890" y2="398" marker-end="url(#ah-sync)"/></g>
 
       <!-- trabalho -->
       <g class="edge e-work" data-a="api" data-b="rmq">
-        <line x1="470" y1="290" x2="424" y2="328" marker-end="url(#ah-work)"/>
+        <line x1="470" y1="290" x2="438" y2="326" marker-end="url(#ah-work)"/>
         <text x="436" y="316">publica</text></g>
       <g class="edge e-work" data-a="rmq" data-b="ent">
-        <path d="M290,346 L278,346 L278,214 L272,214" marker-end="url(#ah-work)"/>
+        <path d="M312,340 L286,340 L286,194 L274,194" marker-end="url(#ah-work)"/>
         <text x="150" y="306">pedido.confirmado</text></g>
       <g class="edge e-work" data-a="ent" data-b="rmq">
-        <path d="M270,200 L286,200 L286,362 L288,362" marker-end="url(#ah-work)"/>
+        <path d="M270,208 L298,208 L298,362 L308,362" marker-end="url(#ah-work)"/>
         <text x="150" y="318">entrega.atribuida</text></g>
       <g class="edge e-work" data-a="rmq" data-b="not">
-        <path d="M462,353 L796,353" marker-end="url(#ah-work)"/>
+        <path d="M484,353 L796,353" marker-end="url(#ah-work)"/>
         <text x="536" y="347">pagamento.aprovado</text></g>
 
       <!-- replicação -->
       <g class="edge e-cdc" data-a="pg1" data-b="dbz">
-        <path d="M489,480 L489,502 L1070,502 L1070,472" marker-end="url(#ah-cdc)"/>
+        <path d="M489,480 L489,502 L1070,502 L1070,480" marker-end="url(#ah-cdc)"/>
         <text x="770" y="496">WAL · logical decoding</text></g>
       <g class="edge e-cdc" data-a="dbz" data-b="kfk">
-        <line x1="1070" y1="430" x2="1070" y2="378" marker-end="url(#ah-cdc)"/></g>
+        <line x1="1070" y1="430" x2="1070" y2="380" marker-end="url(#ah-cdc)"/></g>
       <g class="edge e-cdc" data-a="kfk" data-b="rec">
         <path d="M1070,330 L1070,197 L984,197" marker-end="url(#ah-cdc)"/>
         <text x="998" y="262">dbserver1.public.*</text></g>
 
       <!-- observabilidade -->
       <g class="edge e-obs" data-a="api" data-b="jaeger">
-        <path d="M555,290 L555,522 L757,522 L757,528" marker-end="url(#ah-obs)"/>
+        <path d="M555,290 L555,522 L757,522 L757,526" marker-end="url(#ah-obs)"/>
         <text x="563" y="512">OTLP · 4 serviços</text></g>
       <g class="edge e-obs" data-a="prom" data-b="jaeger">
-        <line x1="828" y1="550" x2="814" y2="550" marker-end="url(#ah-obs)"/></g>
+        <line x1="828" y1="550" x2="818" y2="550" marker-end="url(#ah-obs)"/></g>
       <g class="edge e-obs" data-a="grafana" data-b="prom">
-        <line x1="978" y1="550" x2="964" y2="550" marker-end="url(#ah-obs)"/></g>
+        <line x1="978" y1="550" x2="968" y2="550" marker-end="url(#ah-obs)"/></g>
 
       <!-- nós: núcleo -->
       <g class="node n-person" data-id="users" tabindex="0" role="button" aria-label="Usuários">
@@ -437,10 +437,10 @@
         <text class="ns" x="555" y="280" text-anchor="middle">Clean Architecture · :4000</text>
         <use class="ico" href="#i-api" x="439" y="234" width="13" height="13"/></g>
       <g class="node n-msg" data-id="rmq" tabindex="0" role="button" aria-label="RabbitMQ">
-        <rect x="290" y="330" width="172" height="54" rx="10"/>
-        <text class="nt" x="376" y="352" text-anchor="middle">RabbitMQ</text>
-        <text class="ns" x="376" y="368" text-anchor="middle">carrega trabalho · DLQ</text>
-        <use class="ico" href="#i-fila" x="299" y="338" width="13" height="13"/></g>
+        <rect x="312" y="330" width="172" height="54" rx="10"/>
+        <text class="nt" x="398" y="352" text-anchor="middle">RabbitMQ</text>
+        <text class="ns" x="398" y="368" text-anchor="middle">carrega trabalho · DLQ</text>
+        <use class="ico" href="#i-fila" x="321" y="338" width="13" height="13"/></g>
       <g class="node n-data" data-id="pg1" tabindex="0" role="button" aria-label="Banco principal">
         <rect x="430" y="430" width="118" height="50" rx="10"/>
         <text class="nt" x="489" y="451" text-anchor="middle">Principal</text>
