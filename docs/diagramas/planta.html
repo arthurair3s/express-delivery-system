@@ -67,7 +67,7 @@
   .brand h1{font-size:20px; font-weight:700; letter-spacing:-.02em; line-height:1.2}
   .brand p{margin:6px 0 0; font-size:12.5px; color:var(--muted); line-height:1.5}
 
-  .grp > h2{
+  .grp h2{
     font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:500;
     letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
     margin-bottom:10px;
@@ -242,10 +242,154 @@
   .foot code{font-family:"IBM Plex Mono",monospace; font-size:11.5px; background:var(--surface-2);
              padding:1px 5px; border-radius:4px}
 
+  .pecas,.map-dica,.veu,.liga,.so-celular{display:none}
+  .grp summary{display:block; list-style:none; pointer-events:none}
+  .grp summary::-webkit-details-marker{display:none}
+
   @media (prefers-reduced-motion:reduce){*{transition:none !important}}
   @media (max-width:900px){
     .shell{grid-template-columns:1fr}
     .rail{position:static; max-height:none; border-right:none; border-bottom:1px solid var(--line)}
+  }
+
+  /* ── celular ───────────────────────────────────────────── */
+  /* Daqui para baixo vale só em telas estreitas de telefone. O desktop e o
+     tablet seguem com as duas colunas de sempre: nada aqui os alcança. */
+  @media (max-width:640px){
+    /* O trilho deixa de ser uma caixa e seus itens entram direto na grade
+       da página, para o mapa subir na frente da legenda e do rodapé. */
+    /* minmax(0,1fr) e não 1fr: o mapa tem 1160px de largura mínima e, sem
+       isso, a coluna cresce junto com ele e a página inteira sai da tela. */
+    .shell{grid-template-columns:minmax(0,1fr)}
+    .rail{display:contents}
+    .brand{order:1; padding:20px 18px 2px}
+    .grp-camadas{order:2; padding:14px 18px 12px}
+    .grp-tipos{order:3; padding:0 18px 10px; border-bottom:1px solid var(--line)}
+    .stage{order:4}
+    .hint{order:5; margin:0; padding:18px 18px 0; border-top:none}
+    .so-desktop{display:none}
+    .so-celular{display:inline}
+    .repo{order:6; margin:14px 18px 30px; padding:12px}
+
+    .brand h1{font-size:23px}
+    .brand p{font-size:13.5px; margin-top:7px}
+
+    /* Camadas viram pastilhas: alvo de toque maior e três linhas a menos. */
+    .grp-camadas .sw{flex-direction:row; flex-wrap:wrap; gap:8px}
+    .grp-camadas .sw label{
+      padding:9px 14px; border:1px solid var(--line); border-radius:999px;
+      background:var(--surface); font-size:13px; gap:8px;
+    }
+    .grp-camadas .sw label:has(input:checked){background:var(--surface-2); border-color:var(--line-strong)}
+    .grp-camadas .dash{width:18px}
+
+    /* A legenda de tipos são onze linhas: aberta, empurraria o mapa para
+       fora da primeira tela. Começa recolhida e vira um toque. */
+    .grp summary{
+      display:flex; align-items:center; gap:10px; padding:11px 0;
+      pointer-events:auto; cursor:pointer;
+    }
+    .grp summary h2{margin-bottom:0}
+    .grp summary::after{
+      content:""; width:7px; height:7px; margin-left:auto;
+      border-right:2px solid var(--faint); border-bottom:2px solid var(--faint);
+      transform:translateY(-2px) rotate(45deg); transition:transform .15s;
+    }
+    .grp[open] summary::after{transform:translateY(1px) rotate(-135deg)}
+
+    /* O body.com-painel precisa vir junto: no telefone a ficha abre por
+       baixo e o palco não cede espaço lateral nenhum. Sem isso, a regra do
+       painel lateral vence por especificidade, o palco perde 28px à direita
+       ao abrir uma peça e a página inteira escorrega para o lado. */
+    .stage,
+    body.com-painel .stage{padding:0 0 26px; overflow:visible; min-width:0}
+    /* Título e botão dividem a primeira linha; a nota das portas cai
+       inteira para a segunda, em vez de três linhas quebradas. */
+    .stage-head{padding:0 18px; margin:16px 0 12px; align-items:center; gap:10px}
+    .stage-head h2{order:1}
+    .stage-head #reset{order:2; margin-left:auto}
+    .stage-head span{order:3; flex:0 0 100%; font-size:12px; line-height:1.4}
+    #reset{padding:8px 14px}
+
+    /* O mapa rola sozinho, em tamanho natural. Encolhê-lo para caber nos
+       375px do telefone deixaria o texto dos nós em quatro pixels. */
+    .mapa{
+      overflow-x:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain;
+      padding:16px 18px; background:var(--surface); min-width:0;
+      border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    }
+    .mapa::-webkit-scrollbar{height:0}
+    svg#map{min-width:1160px}
+    .map-dica{display:block; margin:10px 18px 0; font-size:11.5px; color:var(--faint); text-align:center}
+    .map-dica.sumiu{display:none}
+
+    /* Índice das peças: o mapa mostra o formato, os cartões dão o alcance. */
+    .pecas{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; padding:24px 18px 0}
+    .pecas-grupo{
+      grid-column:1/-1; margin:14px 0 1px;
+      font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:500;
+      letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
+    }
+    .pecas-grupo:first-child{margin-top:0}
+    .peca{
+      display:grid; grid-template-columns:auto minmax(0,1fr); align-items:start; gap:3px 9px;
+      padding:11px 12px; font:inherit; text-align:left; cursor:pointer;
+      border:1px solid var(--line-strong); border-radius:12px;
+      background:var(--surface); transition:opacity .18s;
+    }
+    .peca .lgi{grid-row:span 2; width:17px; height:17px; margin-top:2px}
+    .peca-nome{font-family:Archivo,sans-serif; font-size:13px; font-weight:600; line-height:1.25; color:var(--ink)}
+    .peca-sub{font-family:"IBM Plex Mono",monospace; font-size:9.5px; line-height:1.45; color:var(--muted)}
+    .peca.dim{opacity:.3}
+    .peca.sel{outline:2px solid var(--sync); outline-offset:2px}
+    /* Mesma cor do nó correspondente no mapa: a cor do cartão diz a camada,
+       o ícone diz o tipo, igual lá em cima. */
+    .peca.n-person{background:var(--person-bg); border-color:var(--person); color:var(--person)}
+    .peca.n-app{background:var(--sync-bg); border-color:var(--sync); color:var(--sync)}
+    .peca.n-msg{background:var(--work-bg); border-color:var(--work); color:var(--work)}
+    .peca.n-cdc{background:var(--cdc-bg); border-color:var(--cdc); color:var(--cdc)}
+    .peca.n-data{background:var(--surface-2); border-color:var(--line-strong); color:var(--muted)}
+    .peca.n-obs{background:var(--obs-bg); border-color:var(--obs); color:var(--obs)}
+    .peca.n-ext{background:transparent; border-style:dashed; border-color:var(--obs); color:var(--obs)}
+
+    /* A ficha vira folha de baixo: o painel lateral de 340px cobriria a
+       tela inteira e abriria do lado errado para o polegar. */
+    .drawer{
+      top:auto; bottom:0; left:0; right:0; width:auto; max-width:none;
+      height:auto; max-height:86vh; overscroll-behavior:contain;
+      border-left:none; border-top:1px solid var(--line); border-radius:18px 18px 0 0;
+      padding:16px 18px calc(28px + env(safe-area-inset-bottom));
+      transform:translateY(102%); box-shadow:0 -12px 34px rgba(0,0,0,.22);
+    }
+    .drawer::before{
+      content:""; display:block; width:38px; height:4px; margin:0 auto 14px;
+      border-radius:999px; background:var(--line-strong);
+    }
+    .close{top:14px; right:14px; width:36px; height:36px; font-size:20px}
+    .drawer h3,.drawer .papel{padding-right:44px}
+    /* touch-action:none no véu: sem isso, arrastar fora da folha rolava a
+       página atrás dela enquanto a ficha estava aberta. */
+    .veu{
+      display:block; position:fixed; inset:0; z-index:19; touch-action:none;
+      background:rgba(8,10,15,.45); opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    body.com-painel .veu{opacity:1; pointer-events:auto}
+
+    /* Sem o realce do mapa à vista, a ficha precisa dizer ela mesma com
+       quem a peça conversa — e levar até lá num toque. */
+    .liga{display:flex; flex-wrap:wrap; gap:7px; margin-top:20px; padding-top:16px; border-top:1px solid var(--line)}
+    .liga-tit{
+      width:100%; margin:0 0 2px;
+      font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:500;
+      letter-spacing:.12em; text-transform:uppercase; color:var(--faint);
+    }
+    .liga button{
+      font:inherit; font-size:12px; padding:7px 12px; cursor:pointer;
+      border:1px solid var(--line); border-radius:999px;
+      background:var(--surface-2); color:var(--ink);
+    }
+
+    .foot{margin:24px 18px 0; grid-template-columns:1fr; gap:20px; padding-bottom:10px}
   }
 </style>
 </head>
@@ -255,10 +399,12 @@
   <aside class="rail">
     <div class="brand">
       <h1>Planta do Express Delivery</h1>
-      <p>20 serviços no compose, 5 linguagens e dois brokers com papéis distintos. Clique numa peça para ver a ficha dela e isolar suas dependências.</p>
+      <p>20 serviços no compose, 5 linguagens e dois brokers com papéis distintos.
+        <span class="so-desktop">Clique numa peça para ver a ficha dela e isolar suas dependências.</span>
+        <span class="so-celular">Toque numa peça para ver a ficha dela e isolar suas dependências.</span></p>
     </div>
 
-    <div class="grp">
+    <div class="grp grp-camadas">
       <h2>Camadas</h2>
       <div class="sw">
         <label><input type="checkbox" data-layer="sync" checked>
@@ -276,8 +422,8 @@
       </div>
     </div>
 
-    <div class="grp">
-      <h2>Tipos</h2>
+    <details class="grp grp-tipos" id="grp-tipos" open>
+      <summary><h2>Tipos</h2></summary>
       <div class="lg">
         <div style="color:var(--person)"><svg class="lgi" aria-hidden="true"><use href="#i-pessoa"/></svg><span style="color:var(--muted)">Pessoa</span></div>
         <div style="color:var(--sync)"><svg class="lgi" aria-hidden="true"><use href="#i-ui"/></svg><span style="color:var(--muted)">Interface web</span></div>
@@ -291,9 +437,12 @@
         <div style="color:var(--obs)"><svg class="lgi" aria-hidden="true"><use href="#i-obs"/></svg><span style="color:var(--muted)">Observabilidade</span></div>
         <div style="color:var(--obs)"><svg class="lgi" aria-hidden="true"><use href="#i-externo"/></svg><span style="color:var(--muted)">Sistema externo</span></div>
       </div>
-    </div>
+    </details>
 
-    <p class="hint">Clique numa peça para focar. <kbd>Esc</kbd> ou <em>Ver tudo</em> volta ao mapa completo.</p>
+    <p class="hint">
+      <span class="so-desktop">Clique numa peça para focar. <kbd>Esc</kbd> ou <em>Ver tudo</em> volta ao mapa completo.</span>
+      <span class="so-celular">Toque numa peça para abrir a ficha dela. <em>Ver tudo</em> limpa o foco e religa as camadas.</span>
+    </p>
 
     <a class="repo" href="https://github.com/arthurair3s/express-delivery-system"
        target="_blank" rel="noopener noreferrer">
@@ -309,6 +458,7 @@
       <button id="reset" type="button">Ver tudo</button>
     </div>
 
+    <div class="mapa" id="mapa">
     <svg id="map" viewBox="0 0 1160 600" role="img"
          aria-label="Mapa da arquitetura em quatro colunas: logística à esquerda, o núcleo de requisição no centro, analítico e notificações à direita, e o pipeline de CDC na borda direita.">
       <defs>
@@ -546,6 +696,13 @@
         <text class="nt" x="1035" y="555" text-anchor="middle">Grafana</text>
         <use class="ico" href="#i-obs" x="989" y="538" width="13" height="13"/></g>
     </svg>
+    </div>
+    <p class="map-dica" id="map-dica">Arraste o mapa para os lados para ver as quatro colunas</p>
+
+    <!-- Índice das peças: no telefone o mapa serve para ver o formato do
+         sistema, e esta lista para alcançar qualquer contêiner sem precisar
+         caçá-lo arrastando. É montada a partir dos próprios nós do SVG. -->
+    <section class="pecas" id="pecas" aria-label="As peças do sistema"></section>
 
     <div class="foot">
       <section>
@@ -577,7 +734,10 @@
   <p id="d-desc"></p>
   <dl id="d-meta"></dl>
   <p class="note" id="d-note"></p>
+  <div class="liga" id="d-liga"></div>
 </aside>
+
+<div class="veu" id="veu"></div>
 
 <script>
 (function(){
@@ -647,12 +807,50 @@
   var arestas = Array.prototype.slice.call(svg.querySelectorAll('.edge'));
   var drawer = document.getElementById('drawer');
   var selecionado = null;
+  var cartoes = {};
+  var fone = window.matchMedia('(max-width:640px)');
 
   function limpar(){
     nos.concat(arestas).forEach(function(el){ el.classList.remove('dim'); });
+    marcarCartoes(null, null);
     drawer.classList.remove('open');
     document.body.classList.remove('com-painel');
     selecionado = null;
+  }
+
+  // Os cartões do índice acompanham o foco do mapa: fechada a ficha, a
+  // lista fica mostrando quem conversa com a peça escolhida.
+  function marcarCartoes(vizinhos, id){
+    Object.keys(cartoes).forEach(function(k){
+      cartoes[k].classList.toggle('dim', !!vizinhos && !vizinhos[k]);
+      cartoes[k].classList.toggle('sel', k === id);
+    });
+  }
+
+  function nomeCurto(id){
+    var no = svg.querySelector('.node[data-id="' + id + '"]');
+    return no ? no.querySelector('.nt').textContent : id;
+  }
+
+  // No telefone o realce do mapa fica fora de vista enquanto a ficha está
+  // aberta, então ela própria lista as ligações — e cada uma leva até lá.
+  function ligacoes(id, vizinhos){
+    var caixa = document.getElementById('d-liga');
+    caixa.innerHTML = '';
+    if (!fone.matches) return;
+    var ids = Object.keys(vizinhos).filter(function(k){ return k !== id && DADOS[k]; });
+    if (!ids.length) return;
+    var tit = document.createElement('p');
+    tit.className = 'liga-tit';
+    tit.textContent = 'Conversa com';
+    caixa.appendChild(tit);
+    ids.forEach(function(k){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = nomeCurto(k);
+      b.addEventListener('click', function(){ focar(k); });
+      caixa.appendChild(b);
+    });
   }
 
   function focar(id){
@@ -665,6 +863,7 @@
       if (b === id) vizinhos[a] = true;
     });
     nos.forEach(function(n){ n.classList.toggle('dim', !vizinhos[n.dataset.id]); });
+    marcarCartoes(vizinhos, id);
     arestas.forEach(function(e){
       e.classList.toggle('dim', e.dataset.a !== id && e.dataset.b !== id);
     });
@@ -691,6 +890,9 @@
     if (d.note){ nota.innerHTML = d.note; nota.style.display = ''; }
     else { nota.style.display = 'none'; }
 
+    ligacoes(id, vizinhos);
+    drawer.scrollTop = 0;
+
     drawer.classList.add('open');
     document.body.classList.add('com-painel');
     selecionado = id;
@@ -705,6 +907,7 @@
   });
 
   document.getElementById('close').addEventListener('click', limpar);
+  document.getElementById('veu').addEventListener('click', limpar);
   document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') limpar(); });
 
   var camadas = Array.prototype.slice.call(document.querySelectorAll('[data-layer]'));
@@ -730,6 +933,75 @@
     camadas.forEach(function(cx){ cx.checked = true; aplicarCamada(cx); });
     limpar();
   });
+
+  // ── índice das peças ─────────────────────────────────────
+  // Montado a partir dos próprios nós do SVG: nome, legenda e cor saem de
+  // lá, então o cartão não tem como discordar do mapa. Só aparece no
+  // telefone, onde o mapa sozinho exige arrastar para achar cada peça.
+  var GRUPOS = [
+    ['Núcleo da requisição', ['users','web','kong','api','rmq','pg1','rds','stripe']],
+    ['Logística',            ['ent','pg2','rot','osrm']],
+    ['Análise e notificação',['rec','pg3','not','mailtrap']],
+    ['Replicação · CDC',     ['dbz','kfk']],
+    ['Observabilidade',      ['jaeger','prom','grafana']]
+  ];
+
+  var indice = document.getElementById('pecas');
+  GRUPOS.forEach(function(g){
+    var h = document.createElement('h2');
+    h.className = 'pecas-grupo';
+    h.textContent = g[0];
+    indice.appendChild(h);
+
+    g[1].forEach(function(id){
+      var no = svg.querySelector('.node[data-id="' + id + '"]');
+      if (!no) return;
+      var tipo = TIPOS[id] || ['servico',''];
+      var classe = (no.getAttribute('class').match(/n-[a-z]+/) || [''])[0];
+      var sub = no.querySelector('.ns');
+
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'peca ' + classe;
+      b.dataset.id = id;
+      b.innerHTML = '<svg class="lgi" aria-hidden="true"><use href="#i-' + tipo[0] + '"/></svg>'
+                  + '<span class="peca-nome"></span><span class="peca-sub"></span>';
+      b.querySelector('.peca-nome').textContent = no.querySelector('.nt').textContent;
+      b.querySelector('.peca-sub').textContent = sub ? sub.textContent : tipo[1];
+      b.addEventListener('click', function(){
+        selecionado === id ? limpar() : focar(id);
+      });
+      indice.appendChild(b);
+      cartoes[id] = b;
+    });
+  });
+
+  // ── ajustes de telefone ──────────────────────────────────
+  var mapa = document.getElementById('mapa');
+  var dica = document.getElementById('map-dica');
+
+  var aberturaDoMapa = 0;
+
+  function prepararCelular(){
+    // A legenda só fica recolhida enquanto a tela for de telefone. Fora
+    // dele ela volta aberta, senão girar o aparelho para a paisagem a
+    // deixaria escondida e sem o toque que a abre.
+    document.getElementById('grp-tipos').open = !fone.matches;
+    if (!fone.matches) return;
+    // O mapa abre centrado no núcleo da requisição, não na borda esquerda:
+    // é de lá que tudo sai, e era justamente o que ficava fora da tela.
+    aberturaDoMapa = Math.max(0, (mapa.scrollWidth - mapa.clientWidth) / 2);
+    mapa.scrollLeft = aberturaDoMapa;
+  }
+
+  // A dica sai quando a pessoa arrasta de fato. Comparar com a posição de
+  // abertura é o que a impede de sumir no scroll que o próprio código faz.
+  mapa.addEventListener('scroll', function(){
+    if (Math.abs(mapa.scrollLeft - aberturaDoMapa) < 2) return;
+    dica.classList.add('sumiu');
+  });
+  fone.addEventListener('change', prepararCelular);
+  prepararCelular();
 })();
 </script>
 
